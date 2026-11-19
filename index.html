@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#c9184a">
+<title>LoveCircle Uganda</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--red:#c9184a;--deep:#8f1236;--pink:#fff0f3;--ink:#24202a;--muted:#746d78;--line:#f0dce2;--white:#fff}
+*{box-sizing:border-box}body{margin:0;background:#fff8fa;color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:linear-gradient(135deg,#9d174d,#e11d48);color:white;padding:20px max(18px,calc((100% - 980px)/2));box-shadow:0 5px 24px #9d174d25}
+.brand{font-size:24px;font-weight:850;letter-spacing:-.5px}.tag{opacity:.9;font-size:13px}
+main{max-width:980px;margin:22px auto;padding:0 14px 60px}
+.panel{background:white;border:1px solid var(--line);border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 8px 26px #7f1d1d08}
+h1,h2,h3{line-height:1.2}h2{margin:0 0 12px;font-size:22px}p{margin:8px 0;color:var(--muted)}
+input,select,textarea{width:100%;padding:13px 14px;border:1px solid #e8cbd4;border-radius:12px;margin:6px 0 10px;font:inherit;background:white;color:var(--ink)}
+textarea{min-height:82px;resize:vertical}
+button{border:0;border-radius:12px;background:var(--red);color:white;padding:12px 16px;font:700 15px system-ui;cursor:pointer;margin:4px 4px 4px 0}
+button.secondary{background:var(--pink);color:var(--deep)}button.ghost{background:transparent;color:var(--deep);border:1px solid var(--line)}
+button:disabled{opacity:.55;cursor:not-allowed}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}nav button{flex:1;min-width:105px}
+.hidden{display:none!important}.hint{font-size:13px;color:var(--muted)}.status{font-size:13px;color:var(--muted);padding:8px 0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.member{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
+.member img{width:100%;height:220px;object-fit:cover;background:var(--pink)}
+.member .body{padding:14px}.member h3{margin:0 0 5px}.online{display:inline-block;width:9px;height:9px;background:#16a34a;border-radius:50%;margin-right:5px}
+.offline{display:inline-block;width:9px;height:9px;background:#9ca3af;border-radius:50%;margin-right:5px}
+.pill{display:inline-block;border-radius:99px;background:var(--pink);color:var(--deep);padding:4px 9px;font-size:12px}
+#notice{padding:11px 14px;border-radius:12px;background:#fff0f3;color:#8f1236;margin:12px 0;display:none}
+#notice.show{display:block}.chatbox{border:1px solid var(--line);border-radius:12px;padding:12px;min-height:120px;max-height:280px;overflow:auto;background:#fffafd}
+.msg{padding:8px 10px;border-radius:12px;background:#fce7ef;margin:7px 0;max-width:85%}.msg.mine{background:#f3e8ff;margin-left:auto}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
+@media(max-width:560px){header{padding:17px}.panel{padding:16px}.member img{height:190px}}
+</style>
+</head>
+<body>
+<header><div class="brand">❤️ LoveCircle Uganda</div><div class="tag">Real people. Genuine connections. Your story starts here.</div></header>
+<main>
+<div id="notice" role="status"></div>
+<section id="welcome" class="panel">
+<h2>Welcome to LoveCircle Uganda</h2><p>Meet people, make genuine connections and take things at your own pace.</p>
+<div class="row"><button onclick="showSection('register')">Create account</button><button class="secondary" onclick="showSection('login')">Log in</button></div>
+<p class="hint">Adults 18+ only. Please be respectful and protect your personal information.</p>
+</section>
+<section id="register" class="panel hidden">
+<h2>Create your account</h2>
+<input id="regName" placeholder="Full name" autocomplete="name">
+<input id="regAge" type="number" min="18" placeholder="Age (18+)">
+<select id="regGender"><option value="">Select gender</option><option>Woman</option><option>Man</option><option>Non-binary</option><option>Prefer not to say</option></select>
+<input id="regLocation" placeholder="Town or district">
+<input id="regEmail" type="email" placeholder="Email address" autocomplete="email">
+<input id="regPassword" type="password" placeholder="Password (at least 6 characters)" autocomplete="new-password">
+<button onclick="registerUser()">Create account</button><button class="secondary" onclick="showSection('login')">Already registered? Log in</button>
+</section>
+<section id="login" class="panel hidden">
+<h2>Welcome back</h2><input id="loginEmail" type="email" placeholder="Email address" autocomplete="email">
+<input id="loginPassword" type="password" placeholder="Password" autocomplete="current-password">
+<button onclick="loginUser()">Log in</button><button class="secondary" onclick="resetPassword()">Forgot password?</button>
+<button class="ghost" onclick="showSection('register')">Create account</button>
+</section>
+<section id="app" class="hidden">
+<div class="panel">
+<div class="row"><div><h2 id="hello">Your LoveCircle</h2><p id="accountStatus">Signed in</p></div><button class="secondary" onclick="logoutUser()">Log out</button></div>
+<nav><button onclick="loadDiscover()">Discover</button><button class="secondary" onclick="loadMyProfile()">My profile</button><button class="secondary" onclick="loadLikes()">Likes</button><button class="secondary" onclick="loadMatches()">Matches</button></nav>
+</div>
+<section id="discoverView" class="panel"><h2>Discover members</h2><p>Browse member profiles and like someone you'd like to know.</p><div id="members" class="grid"></div></section>
+<section id="profileView" class="panel hidden">
+<h2>My profile</h2><input id="profileName" placeholder="Full name"><input id="profileAge" type="number" min="18" placeholder="Age (18+)">
+<select id="profileGender"><option value="">Select gender</option><option>Woman</option><option>Man</option><option>Non-binary</option><option>Prefer not to say</option></select>
+<input id="profileLocation" placeholder="Town or district"><input id="profilePhoto" placeholder="Profile photo URL (optional)">
+<textarea id="profileBio" placeholder="A little about yourself"></textarea><button onclick="saveProfile()">Save profile</button>
+<p class="hint">Do not put your private phone number in your public bio.</p>
+</section>
+<section id="likesView" class="panel hidden"><h2>People you've liked</h2><div id="likesList"></div></section>
+<section id="matchesView" class="panel hidden"><h2>Your connections</h2><div id="matchesList"></div><div id="chatArea" class="hidden"><h3 id="chatTitle">Chat</h3><div id="chatMessages" class="chatbox"></div><div class="row"><input id="chatInput" placeholder="Write a message"><button onclick="sendMessage()">Send</button></div></div></section>
+</section>
+<footer>LoveCircle Uganda • 18+ only • Be kind, stay safe</footer>
+</main>
+<script>
+const SUPABASE_URL = "https://egjlmskevuironlfudaz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_yB0WtjH2ve6AQTZ8sKUv2w_kdxyVt5Y";
+const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let currentUser = null, currentProfile = null, activeMatch = null, presenceChannel = null, onlineIds = new Set();
+const $ = id => document.getElementById(id);
+function notice(message){$('notice').textContent=message;$('notice').classList.add('show');window.scrollTo({top:0,behavior:'smooth'});}
+function clearNotice(){$('notice').classList.remove('show');}
+function showSection(id){['welcome','register','login','app'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden');clearNotice();}
+function showAppView(id){['discoverView','profileView','likesView','matchesView'].forEach(x=>$(x).classList.add('hidden'));$(id).classList.remove('hidden');}
+async function registerUser(){
+ const full_name=$('regName').value.trim(), age=Number($('regAge').value), gender=$('regGender').value, location=$('regLocation').value.trim(), email=$('regEmail').value.trim(), password=$('regPassword').value;
+ if(!full_name||!age||!gender||!location||!email||!password){notice('Please complete every field.');return;}
+ if(age<18){notice('You must be at least 18 to join.');return;} if(password.length<6){notice('Password must be at least 6 characters.');return;}
+ const {data,error}=await supabaseClient.auth.signUp({email,password,options:{data:{full_name,age,gender,location}}});
+ if(error){notice(error.message);return;}
+ notice(data.session?'Account created. Welcome!':'Account created. Check your email to confirm your account, then log in.');
+}
+async function loginUser(){
+ const email=$('loginEmail').value.trim(),password=$('loginPassword').value;
+ if(!email||!password){notice('Enter your email and password.');return;}
+ const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
+ if(error){notice(error.message);return;} currentUser=data.user; await enterApp();
+}
+async function resetPassword(){
+ const email=$('loginEmail').value.trim();if(!email){notice('Enter your registered email first.');return;}
+ const {error}=await supabaseClient.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+ if(error){notice(error.message);return;}notice('Password reset email sent. Open it on this device. If the link fails, the Supabase Site URL must be set to this published website address.');
+}
+async function logoutUser(){if(presenceChannel)await supabaseClient.removeChannel(presenceChannel);await supabaseClient.auth.signOut();currentUser=null;showSection('welcome');}
+async function enterApp(){
+ if(!currentUser){const {data}=await supabaseClient.auth.getUser();currentUser=data.user;}
+ if(!currentUser){showSection('welcome');return;}
+ $('hello').textContent='Welcome, '+(currentUser.user_metadata.full_name||'member');
+ showSection('app');await ensureProfile();await startPresence();await loadDiscover();
+}
+async function ensureProfile(){
+ const m=currentUser.user_metadata||{};
+ const {data,error}=await supabaseClient.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
+ if(error){notice('Could not load your profile: '+error.message);return;}
+ if(data){currentProfile=data;return;}
+ const row={id:currentUser.id,full_name:m.full_name||'',age:Number(m.age)||null,gender:m.gender||null,location:m.location||'',is_online:true,last_seen:new Date().toISOString()};
+ const result=await supabaseClient.from('profiles').insert(row).select().single();
+ if(result.error)notice('Your account is active, but profile creation needs a database policy: '+result.error.message);else currentProfile=result.data;
+}
+async function startPresence(){
+ if(presenceChannel)await supabaseClient.removeChannel(presenceChannel);
+ presenceChannel=supabaseClient.channel('lovecircle-presence',{config:{presence:{key:currentUser.id}}});
+ presenceChannel.on('presence',{event:'sync'},()=>{const state=presenceChannel.presenceState();onlineIds=new Set(Object.keys(state));renderOnlineDots();});
+ presenceChannel.subscribe(async status=>{if(status==='SUBSCRIBED'){await presenceChannel.track({user_id:currentUser.id,online_at:new Date().toISOString()});await supabaseClient.from('profiles').update({is_online:true,last_seen:new Date().toISOString()}).eq('id',currentUser.id);}});
+}
+function renderOnlineDots(){document.querySelectorAll('[data-member-id]').forEach(el=>{const id=el.dataset.memberId,dot=el.querySelector('.online-dot');if(dot){dot.className=onlineIds.has(id)?'online-dot online':'online-dot offline';const t=el.querySelector('.online-text');if(t)t.textContent=onlineIds.has(id)?'Online':'Offline';}});}
+async function loadDiscover(){
+ showAppView('discoverView');$('members').innerHTML='<p>Loading members…</p>';
+ const {data,error}=await supabaseClient.from('profiles').select('id,full_name,age,gender,location,bio,avatar_url,is_online,last_seen').neq('id',currentUser.id).order('created_at',{ascending:false}).limit(60);
+ if(error){$('members').innerHTML='';notice('Could not load profiles: '+error.message+' Check the profiles table permissions.');return;}
+ if(!data||!data.length){$('members').innerHTML='<p>No other profiles yet. Invite people to join LoveCircle Uganda!</p>';return;}
+ $('members').innerHTML=data.map(p=>memberCard(p)).join('');renderOnlineDots();
+}
+function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function memberCard(p){
+ const photo=p.avatar_url||'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=700&auto=format&fit=crop';
+ return `<article class="member" data-member-id="${safe(p.id)}"><img src="${safe(photo)}" alt="Profile photo" onerror="this.src='https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle'"><div class="body"><h3>${safe(p.full_name||'LoveCircle member')}${p.age?', '+safe(p.age):''}</h3><span class="pill">${safe(p.location||'Uganda')}</span><p><span class="online-dot ${p.is_online?'online':'offline'}"></span><span class="online-text">${p.is_online?'Online':'Offline'}</span></p><p>${safe(p.bio||'Ready to make a genuine connection.')}</p><button onclick="likeMember('${safe(p.id)}')">❤️ Like</button></div></article>`;
+}
+async function saveProfile(){
+ const full_name=$('profileName').value.trim(),age=Number($('profileAge').value),gender=$('profileGender').value,location=$('profileLocation').value.trim(),avatar_url=$('profilePhoto').value.trim(),bio=$('profileBio').value.trim();
+ if(!full_name||!age||age<18){notice('Enter your name and an age of 18 or above.');return;}
+ const {data,error}=await supabaseClient.from('profiles').upsert({id:currentUser.id,full_name,age,gender,location,avatar_url,bio},{onConflict:'id'}).select().single();
+ if(error){notice('Could not save profile: '+error.message);return;}currentProfile=data;notice('Your profile has been saved.');
+}
+async function loadMyProfile(){
+ showAppView('profileView');const {data,error}=await supabaseClient.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
+ if(error){notice(error.message);return;}const p=data||currentProfile||{};
+ $('profileName').value=p.full_name||'';$('profileAge').value=p.age||'';$('profileGender').value=p.gender||'';$('profileLocation').value=p.location||'';$('profilePhoto').value=p.avatar_url||'';$('profileBio').value=p.bio||'';
+}
+async function likeMember(id){
+ const {error}=await supabaseClient.from('likes').upsert({user_id:currentUser.id,liked_user_id:id},{onConflict:'user_id,liked_user_id'});
+ if(error){notice('Could not send like: '+error.message);return;}
+ const {data:back}=await supabaseClient.from('likes').select('id').eq('user_id',id).eq('liked_user_id',currentUser.id).maybeSingle();
+ if(back){
+  const [a,b]=[currentUser.id,id].sort();
+  const result=await supabaseClient.from('matches').upsert({user1_id:a,user2_id:b},{onConflict:'user1_id,user2_id'});
+  if(result.error)notice('Like sent! Match creation needs database permissions: '+result.error.message);else notice('It is a match! ❤️');
+ }else notice('Like sent! If they like you back, you can match.');
+}
+async function loadLikes(){
+ showAppView('likesView');$('likesList').textContent='Loading…';
+ const {data,error}=await supabaseClient.from('likes').select('liked_user_id').eq('user_id',currentUser.id);
+ if(error){notice(error.message);return;}if(!data.length){$('likesList').textContent="You haven't liked anyone yet.";return;}
+ const ids=data.map(x=>x.liked_user_id);const res=await supabaseClient.from('profiles').select('id,full_name,age,location').in('id',ids);
+ if(res.error){notice(res.error.message);return;}
+ $('likesList').innerHTML=res.data.map(p=>`<p><strong>${safe(p.full_name)}</strong>${p.age?', '+safe(p.age):''} — ${safe(p.location||'Uganda')}</p>`).join('');
+}
+async function loadMatches(){
+ showAppView('matchesView');$('chatArea').classList.add('hidden');$('matchesList').textContent='Loading…';
+ const {data,error}=await supabaseClient.from('matches').select('*').or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`);
+ if(error){notice('Could not load matches: '+error.message);return;}if(!data.length){$('matchesList').textContent='No matches yet. Keep discovering members!';return;}
+ const ids=data.map(m=>m.user1_id===currentUser.id?m.user2_id:m.user1_id);
+ const people=await supabaseClient.from('profiles').select('id,full_name,age,location').in('id',ids);
+ if(people.error){notice(people.error.message);return;}
+ $('matchesList').innerHTML=people.data.map(p=>`<p><strong>${safe(p.full_name)}</strong> — ${safe(p.location||'Uganda')} <button class="secondary" onclick="openChat('${safe(p.id)}')">Message</button></p>`).join('');
+ window.matchRows=data;
+}
+async function openChat(otherId){
+ const match=(window.matchRows||[]).find(m=>m.user1_id===otherId||m.user2_id===otherId);
+ if(!match){notice('Match not found.');return;}activeMatch=match;
+ const {data:person}=await supabaseClient.from('profiles').select('full_name').eq('id',otherId).maybeSingle();
+ $('chatTitle').textContent='Chat with '+(person?.full_name||'member');$('chatArea').classList.remove('hidden');await refreshMessages();
+}
+async function refreshMessages(){
+ if(!activeMatch)return;const {data,error}=await supabaseClient.from('messages').select('*').eq('match_id',activeMatch.id).order('created_at',{ascending:true}).limit(100);
+ if(error){notice('Messages need database permissions: '+error.message);return;}
+ $('chatMessages').innerHTML=(data||[]).map(m=>`<div class="msg ${m.sender_id===currentUser.id?'mine':''}">${safe(m.message)}</div>`).join('');$('chatMessages').scrollTop=$('chatMessages').scrollHeight;
+}
+async function sendMessage(){
+ const message=$('chatInput').value.trim();if(!message||!activeMatch)return;
+ const otherId=activeMatch.user1_id===currentUser.id?activeMatch.user2_id:activeMatch.user1_id;
+ const {error}=await supabaseClient.from('messages').insert({sender_id:currentUser.id,receiver_id:otherId,message,match_id:activeMatch.id});
+ if(error){notice('Could not send message: '+error.message);return;}$('chatInput').value='';await refreshMessages();
+}
+supabaseClient.auth.onAuthStateChange(async(event,session)=>{if(session?.user){currentUser=session.user;if(event==='SIGNED_IN')setTimeout(()=>enterApp(),0);}else if(event==='SIGNED_OUT'){currentUser=null;showSection('welcome');}});
+(async()=>{const {data}=await supabaseClient.auth.getSession();if(data.session){currentUser=data.session.user;await enterApp();}else showSection('welcome');})();
+window.addEventListener('beforeunload',()=>{if(currentUser)supabaseClient.from('profiles').update({is_online:false,last_seen:new Date().toISOString()}).eq('id',currentUser.id);});
+</script>
+</body></html>
