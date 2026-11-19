@@ -202,4 +202,90 @@ supabaseClient.auth.onAuthStateChange(async(event,session)=>{if(session?.user){c
 (async()=>{const {data}=await supabaseClient.auth.getSession();if(data.session){currentUser=data.session.user;await enterApp();}else showSection('welcome');})();
 window.addEventListener('beforeunload',()=>{if(currentUser)supabaseClient.from('profiles').update({is_online:false,last_seen:new Date().toISOString()}).eq('id',currentUser.id);});
 </script>
+</body></html>ait supabaseClient.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
+ if(error){notice('Could not load your profile: '+error.message);return;}
+ if(data){currentProfile=data;return;}
+ const row={id:currentUser.id,full_name:m.full_name||'',age:Number(m.age)||null,gender:m.gender||null,location:m.location||'',is_online:true,last_seen:new Date().toISOString()};
+ const result=await supabaseClient.from('profiles').insert(row).select().single();
+ if(result.error)notice('Your account is active, but profile creation needs a database policy: '+result.error.message);else currentProfile=result.data;
+}
+async function startPresence(){
+ if(presenceChannel)await supabaseClient.removeChannel(presenceChannel);
+ presenceChannel=supabaseClient.channel('lovecircle-presence',{config:{presence:{key:currentUser.id}}});
+ presenceChannel.on('presence',{event:'sync'},()=>{const state=presenceChannel.presenceState();onlineIds=new Set(Object.keys(state));renderOnlineDots();});
+ presenceChannel.subscribe(async status=>{if(status==='SUBSCRIBED'){await presenceChannel.track({user_id:currentUser.id,online_at:new Date().toISOString()});await supabaseClient.from('profiles').update({is_online:true,last_seen:new Date().toISOString()}).eq('id',currentUser.id);}});
+}
+function renderOnlineDots(){document.querySelectorAll('[data-member-id]').forEach(el=>{const id=el.dataset.memberId,dot=el.querySelector('.online-dot');if(dot){dot.className=onlineIds.has(id)?'online-dot online':'online-dot offline';const t=el.querySelector('.online-text');if(t)t.textContent=onlineIds.has(id)?'Online':'Offline';}});}
+async function loadDiscover(){
+ showAppView('discoverView');$('members').innerHTML='<p>Loading members…</p>';
+ const {data,error}=await supabaseClient.from('profiles').select('id,full_name,age,gender,location,bio,avatar_url,is_online,last_seen').neq('id',currentUser.id).order('created_at',{ascending:false}).limit(60);
+ if(error){$('members').innerHTML='';notice('Could not load profiles: '+error.message+' Check the profiles table permissions.');return;}
+ if(!data||!data.length){$('members').innerHTML='<p>No other profiles yet. Invite people to join LoveCircle Uganda!</p>';return;}
+ $('members').innerHTML=data.map(p=>memberCard(p)).join('');renderOnlineDots();
+}
+function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function memberCard(p){
+ const photo=p.avatar_url||'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=700&auto=format&fit=crop';
+ return `<article class="member" data-member-id="${safe(p.id)}"><img src="${safe(photo)}" alt="Profile photo" onerror="this.src='https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle'"><div class="body"><h3>${safe(p.full_name||'LoveCircle member')}${p.age?', '+safe(p.age):''}</h3><span class="pill">${safe(p.location||'Uganda')}</span><p><span class="online-dot ${p.is_online?'online':'offline'}"></span><span class="online-text">${p.is_online?'Online':'Offline'}</span></p><p>${safe(p.bio||'Ready to make a genuine connection.')}</p><button onclick="likeMember('${safe(p.id)}')">❤️ Like</button></div></article>`;
+}
+async function saveProfile(){
+ const full_name=$('profileName').value.trim(),age=Number($('profileAge').value),gender=$('profileGender').value,location=$('profileLocation').value.trim(),avatar_url=$('profilePhoto').value.trim(),bio=$('profileBio').value.trim();
+ if(!full_name||!age||age<18){notice('Enter your name and an age of 18 or above.');return;}
+ const {data,error}=await supabaseClient.from('profiles').upsert({id:currentUser.id,full_name,age,gender,location,avatar_url,bio},{onConflict:'id'}).select().single();
+ if(error){notice('Could not save profile: '+error.message);return;}currentProfile=data;notice('Your profile has been saved.');
+}
+async function loadMyProfile(){
+ showAppView('profileView');const {data,error}=await supabaseClient.from('profiles').select('*').eq('id',currentUser.id).maybeSingle();
+ if(error){notice(error.message);return;}const p=data||currentProfile||{};
+ $('profileName').value=p.full_name||'';$('profileAge').value=p.age||'';$('profileGender').value=p.gender||'';$('profileLocation').value=p.location||'';$('profilePhoto').value=p.avatar_url||'';$('profileBio').value=p.bio||'';
+}
+async function likeMember(id){
+ const {error}=await supabaseClient.from('likes').upsert({user_id:currentUser.id,liked_user_id:id},{onConflict:'user_id,liked_user_id'});
+ if(error){notice('Could not send like: '+error.message);return;}
+ const {data:back}=await supabaseClient.from('likes').select('id').eq('user_id',id).eq('liked_user_id',currentUser.id).maybeSingle();
+ if(back){
+  const [a,b]=[currentUser.id,id].sort();
+  const result=await supabaseClient.from('matches').upsert({user1_id:a,user2_id:b},{onConflict:'user1_id,user2_id'});
+  if(result.error)notice('Like sent! Match creation needs database permissions: '+result.error.message);else notice('It is a match! ❤️');
+ }else notice('Like sent! If they like you back, you can match.');
+}
+async function loadLikes(){
+ showAppView('likesView');$('likesList').textContent='Loading…';
+ const {data,error}=await supabaseClient.from('likes').select('liked_user_id').eq('user_id',currentUser.id);
+ if(error){notice(error.message);return;}if(!data.length){$('likesList').textContent="You haven't liked anyone yet.";return;}
+ const ids=data.map(x=>x.liked_user_id);const res=await supabaseClient.from('profiles').select('id,full_name,age,location').in('id',ids);
+ if(res.error){notice(res.error.message);return;}
+ $('likesList').innerHTML=res.data.map(p=>`<p><strong>${safe(p.full_name)}</strong>${p.age?', '+safe(p.age):''} — ${safe(p.location||'Uganda')}</p>`).join('');
+}
+async function loadMatches(){
+ showAppView('matchesView');$('chatArea').classList.add('hidden');$('matchesList').textContent='Loading…';
+ const {data,error}=await supabaseClient.from('matches').select('*').or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`);
+ if(error){notice('Could not load matches: '+error.message);return;}if(!data.length){$('matchesList').textContent='No matches yet. Keep discovering members!';return;}
+ const ids=data.map(m=>m.user1_id===currentUser.id?m.user2_id:m.user1_id);
+ const people=await supabaseClient.from('profiles').select('id,full_name,age,location').in('id',ids);
+ if(people.error){notice(people.error.message);return;}
+ $('matchesList').innerHTML=people.data.map(p=>`<p><strong>${safe(p.full_name)}</strong> — ${safe(p.location||'Uganda')} <button class="secondary" onclick="openChat('${safe(p.id)}')">Message</button></p>`).join('');
+ window.matchRows=data;
+}
+async function openChat(otherId){
+ const match=(window.matchRows||[]).find(m=>m.user1_id===otherId||m.user2_id===otherId);
+ if(!match){notice('Match not found.');return;}activeMatch=match;
+ const {data:person}=await supabaseClient.from('profiles').select('full_name').eq('id',otherId).maybeSingle();
+ $('chatTitle').textContent='Chat with '+(person?.full_name||'member');$('chatArea').classList.remove('hidden');await refreshMessages();
+}
+async function refreshMessages(){
+ if(!activeMatch)return;const {data,error}=await supabaseClient.from('messages').select('*').eq('match_id',activeMatch.id).order('created_at',{ascending:true}).limit(100);
+ if(error){notice('Messages need database permissions: '+error.message);return;}
+ $('chatMessages').innerHTML=(data||[]).map(m=>`<div class="msg ${m.sender_id===currentUser.id?'mine':''}">${safe(m.message)}</div>`).join('');$('chatMessages').scrollTop=$('chatMessages').scrollHeight;
+}
+async function sendMessage(){
+ const message=$('chatInput').value.trim();if(!message||!activeMatch)return;
+ const otherId=activeMatch.user1_id===currentUser.id?activeMatch.user2_id:activeMatch.user1_id;
+ const {error}=await supabaseClient.from('messages').insert({sender_id:currentUser.id,receiver_id:otherId,message,match_id:activeMatch.id});
+ if(error){notice('Could not send message: '+error.message);return;}$('chatInput').value='';await refreshMessages();
+}
+supabaseClient.auth.onAuthStateChange(async(event,session)=>{if(session?.user){currentUser=session.user;if(event==='SIGNED_IN')setTimeout(()=>enterApp(),0);}else if(event==='SIGNED_OUT'){currentUser=null;showSection('welcome');}});
+(async()=>{const {data}=await supabaseClient.auth.getSession();if(data.session){currentUser=data.session.user;await enterApp();}else showSection('welcome');})();
+window.addEventListener('beforeunload',()=>{if(currentUser)supabaseClient.from('profiles').update({is_online:false,last_seen:new Date().toISOString()}).eq('id',currentUser.id);});
+</script>
 </body></html>
