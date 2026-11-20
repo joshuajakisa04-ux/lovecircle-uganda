@@ -198,7 +198,22 @@ async function sendMessage(){
  const {error}=await supabaseClient.from('messages').insert({sender_id:currentUser.id,receiver_id:otherId,message,match_id:activeMatch.id});
  if(error){notice('Could not send message: '+error.message);return;}$('chatInput').value='';await refreshMessages();
 }
-supabaseClient.auth.onAuthStateChange(async(event,session)=>{if(session?.user){currentUser=session.user;if(event==='SIGNED_IN')setTimeout(()=>enterApp(),0);}else if(event==='SIGNED_OUT'){currentUser=null;showSection('welcome');}});
+supabaseClient.auth.onAuthStateChange((event,session)=>{
+ if(event==='PASSWORD_RECOVERY'){
+  setTimeout(async()=>{
+   const newPassword=prompt('Enter your new password (at least 6 characters):');
+   if(!newPassword){notice('Password reset cancelled.');return;}
+   if(newPassword.length<6){notice('Password must be at least 6 characters.');return;}
+   const {error}=await supabaseClient.auth.updateUser({password:newPassword});
+   if(error){notice(error.message);return;}
+   notice('Password updated successfully. Please log in with your new password.');
+   await supabaseClient.auth.signOut();
+  },0);
+  return;
+ }
+ if(session?.user){currentUser=session.user;if(event==='SIGNED_IN')setTimeout(()=>enterApp(),0);}
+ else if(event==='SIGNED_OUT'){currentUser=null;showSection('welcome');}
+});(async(event,session)=>{if(session?.user){currentUser=session.user;if(event==='SIGNED_IN')setTimeout(()=>enterApp(),0);}else if(event==='SIGNED_OUT'){currentUser=null;showSection('welcome');}});
 (async()=>{const {data}=await supabaseClient.auth.getSession();if(data.session){currentUser=data.session.user;await enterApp();}else showSection('welcome');})();
 window.addEventListener('beforeunload',()=>{if(currentUser)supabaseClient.from('profiles').update({is_online:false,last_seen:new Date().toISOString()}).eq('id',currentUser.id);});
 </script>
