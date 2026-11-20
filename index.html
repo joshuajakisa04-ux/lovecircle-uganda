@@ -71,7 +71,8 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 <select id="profileGender"><option value="">Select gender</option><option>Woman</option><option>Man</option><option>Non-binary</option><option>Prefer not to say</option></select>
 <input id="profileLocation" placeholder="Town or district"><input id="profilePhoto" placeholder="Profile photo URL (optional)">
 <textarea id="profileBio" placeholder="A little about yourself"></textarea><button onclick="saveProfile()">Save profile</button>
-<p class="hint">Do not put your private phone number in your public bio.</p>
+<input id="privatePhone" type="tel" placeholder="Your private phone number (e.g. 07XXXXXXXX)">
+ <p class="hint">Do not put your private phone number in your public bio.</p>
 </section>
 <section id="likesView" class="panel hidden"><h2>People you've liked</h2><div id="likesList"></div></section>
 <section id="matchesView" class="panel hidden"><h2>Your connections</h2><div id="matchesList"></div><div id="chatArea" class="hidden"><h3 id="chatTitle">Chat</h3><div id="chatMessages" class="chatbox"></div><div class="row"><input id="chatInput" placeholder="Write a message"><button onclick="sendMessage()">Send</button></div></div></section>
