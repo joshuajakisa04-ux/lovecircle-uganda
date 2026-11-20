@@ -213,7 +213,7 @@ supabaseClient.auth.onAuthStateChange((event,session)=>{
  }
  if(session?.user){currentUser=session.user;if(event==='SIGNED_IN')setTimeout(()=>enterApp(),0);}
  else if(event==='SIGNED_OUT'){currentUser=null;showSection('welcome');}
-});(async(event,session)=>{if(session?.user){currentUser=session.user;if(event==='SIGNED_IN')setTimeout(()=>enterApp(),0);}else if(event==='SIGNED_OUT'){currentUser=null;showSection('welcome');}});
+});
 (async()=>{const {data}=await supabaseClient.auth.getSession();if(data.session){currentUser=data.session.user;await enterApp();}else showSection('welcome');})();
 window.addEventListener('beforeunload',()=>{if(currentUser)supabaseClient.from('profiles').update({is_online:false,last_seen:new Date().toISOString()}).eq('id',currentUser.id);});
 </script>
