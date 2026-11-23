@@ -141,7 +141,16 @@ async function loadDiscover(){
 function safe(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function memberCard(p){
  const photo=p.avatar_url||'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=700&auto=format&fit=crop';
- return `<article class="member" data-member-id="${safe(p.id)}"><img src="${safe(photo)}" alt="Profile photo" onerror="this.src='https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle'"><div class="body"><h3>${safe(p.full_name||'LoveCircle member')}${p.age?', '+safe(p.age):''}</h3><span class="pill">${safe(p.location||'Uganda')}</span><p><span class="online-dot ${p.is_online?'online':'offline'}"></span><span class="online-text">${p.is_online?'Online':'Offline'}</span></p><p>${safe(p.bio||'Ready to make a genuine connection.')}</p><button onclick="likeMember('${safe(p.id)}')">❤️ Like</button></div></article>`;
+ return `<article class="member" data-member-id="${safe(p.id)}">
+ <img src="${safe(photo)}" alt="Profile photo" onerror="this.src='https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle'">
+ <div class="body">
+ <h3>${safe(p.full_name||'LoveCircle member')}${p.age?', '+safe(p.age):''}</h3>
+ <span class="pill">${safe(p.location||'Uganda')}</span>
+ <p><span class="online-dot ${p.is_online?'online':'offline'}"></span><span class="online-text">${p.is_online?'Online':'Offline'}</span></p>
+ <p>${safe(p.bio||'Ready to make a genuine connection.')}</p>
+ <button class="secondary" onclick="openMemberProfile('${safe(p.id)}')">View Profile</button>
+ <button onclick="likeMember('${safe(p.id)}')">❤️ Like</button>
+ </div></article>`;
 }
 async function saveProfile(){
  const full_name=$('profileName').value.trim(),age=Number($('profileAge').value),gender=$('profileGender').value,location=$('profileLocation').value.trim(),avatar_url=$('profilePhoto').value.trim(),bio=$('profileBio').value.trim();
