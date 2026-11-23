@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#c9184a">
-<title>LoveCircle Uganda</title>
+<link rel="manifest" href="./manifest.json">
+  <title>LoveCircle Uganda</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--red:#c9184a;--deep:#8f1236;--pink:#fff0f3;--ink:#24202a;--muted:#746d78;--line:#f0dce2}
@@ -657,6 +658,15 @@ supabaseClient.auth.getSession().then(({data,error})=>{
     enterApp();
   }
 });
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(() => console.log('LoveCircle notifications ready'))
+      .catch(error => console.error('Service worker error:', error));
+  });
+}
 </script>
 </body>
 </html>
