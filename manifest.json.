@@ -1,0 +1,11 @@
+
+{
+  "name": "LoveCircle Uganda",
+  "short_name": "LoveCircle",
+  "description": "Meet people and make genuine connections in Uganda.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff8fa",
+  "theme_color": "#c9184a"
+}
