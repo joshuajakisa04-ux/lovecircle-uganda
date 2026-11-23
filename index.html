@@ -175,7 +175,14 @@ let presenceChannel = null;
 let onlineIds = new Set();
 
 const $ = id => document.getElementById(id);
+$('profilePhotoFile')?.addEventListener('change', function(){
+  const file=this.files[0];
+  if(!file)return;
 
+  const preview=$('profilePhotoPreview');
+  preview.src=URL.createObjectURL(file);
+  preview.style.display='block';
+});
 function notice(message) {
   $('notice').textContent = message;
   $('notice').classList.add('show');
