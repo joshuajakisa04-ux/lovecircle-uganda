@@ -161,7 +161,28 @@ function memberCard(p){
  <button onclick="likeMember('${safe(p.id)}')">❤️ Like</button>
  </div></article>`;
 }
-async function saveProfile(){
+async function openMemberProfile(id){
+ const {data,error}=await supabaseClient
+ .from('profiles')
+ .select('id,full_name,age,gender,location,bio,avatar_url')
+ .eq('id',id)
+ .maybeSingle();
+
+ if(error||!data){
+  notice('Could not open this profile.');
+  return;
+ }
+
+ window.viewedMemberId=data.id;
+ $('memberProfilePhoto').src=data.avatar_url||'https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle';
+ $('memberProfileName').textContent=(data.full_name||'LoveCircle member')+(data.age?', '+data.age:'');
+ $('memberProfileGender').textContent=data.gender||'';
+ $('memberProfileLocation').textContent=data.location||'Uganda';
+ $('memberProfileBio').textContent=data.bio||'No bio added yet.';
+
+ showAppView('memberProfileView');
+}
+ async function saveProfile(){
  const full_name=$('profileName').value.trim(),age=Number($('profileAge').value),gender=$('profileGender').value,location=$('profileLocation').value.trim(),avatar_url=$('profilePhoto').value.trim(),bio=$('profileBio').value.trim();
  if(!full_name||!age||age<18){notice('Enter your name and an age of 18 or above.');return;}
  const {data,error}=await supabaseClient.from('profiles').upsert({id:currentUser.id,full_name,age,gender,location,avatar_url,bio},{onConflict:'id'}).select().single();
