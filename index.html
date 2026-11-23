@@ -228,6 +228,33 @@ async function requestPhoneUnlock(){
   'Request reference: '+data.id
  );
 }
+async function checkPhoneUnlock(){
+ const requestId=window.pendingUnlockRequestId;
+
+ if(!requestId){
+  notice('Please request a phone unlock first.');
+  return;
+ }
+
+ const {data,error}=await supabaseClient.rpc(
+  'reveal_paid_phone_number',
+  {p_request_id:requestId}
+ );
+
+ if(error){
+  notice('Could not check payment: '+error.message);
+  return;
+ }
+
+ const result=Array.isArray(data)?data[0]:data;
+
+ if(!result||!result.phone_number){
+  notice('Payment has not yet been confirmed. Please wait.');
+  return;
+ }
+
+ alert('Phone number: '+result.phone_number);
+}
  async function saveProfile(){
  const full_name=$('profileName').value.trim(),age=Number($('profileAge').value),gender=$('profileGender').value,location=$('profileLocation').value.trim(),avatar_url=$('profilePhoto').value.trim(),bio=$('profileBio').value.trim();
  if(!full_name||!age||age<18){notice('Enter your name and an age of 18 or above.');return;}
