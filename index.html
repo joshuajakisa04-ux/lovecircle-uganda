@@ -564,21 +564,99 @@ async function loadLikes() {
   ).join('');
 }
 
-async function loadMatches() {
+
+async function loadMatches(){
   showAppView('matchesView');
   $('chatArea').classList.add('hidden');
-  $('matchesList').textContent = 'Loading…';
+  $('matchesList').textContent='Loading…';
 
-  const {data,error} = await supabaseClient.from('matches').select('*')
+  const {data,error}=await supabaseClient.from('matches')
+    .select('*')
     .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`);
 
-  if (error) {
-    notice('Could not load matches: ' + error.message);
-    return;
-  }
-  if (!data.length) {
-    $('matchesList').textContent = 'No matches yet. Keep discovering members!';
+  if(error){notice('Could not load matches: '+error.message);return;}
+  if(!data.length){
+    $('matchesList').textContent='No matches yet. Keep discovering members!';
     return;
   }
 
-  const ids = 
+  window.matchRows=data;
+  const ids=data.map(m=>m.user1_id===currentUser.id?m.user2_id:m.user1_id);
+
+  const people=await supabaseClient.from('profiles')
+    .select('id,full_name,age,location')
+    .in('id',ids);
+
+  if(people.error){notice(people.error.message);return;}
+
+  $('matchesList').innerHTML=people.data.map(p=>
+    `<p><strong>${safe(p.full_name)}</strong> — ${safe(p.location||'Uganda')}
+    <button class="secondary" onclick="openChat('${safe(p.id)}')">Message</button></p>`
+  ).join('');
+}
+
+async function openChat(otherId){
+  const match=(window.matchRows||[]).find(m=>
+    (m.user1_id===currentUser.id&&m.user2_id===otherId)||
+    (m.user2_id===currentUser.id&&m.user1_id===otherId)
+  );
+
+  if(!match){notice('Match not found.');return;}
+
+  activeMatch=match;
+
+  const {data:person}=await supabaseClient.from('profiles')
+    .select('full_name').eq('id',otherId).maybeSingle();
+
+  $('chatTitle').textContent='Chat with '+(person?.full_name||'member');
+  $('chatArea').classList.remove('hidden');
+  await refreshMessages();
+}
+
+async function refreshMessages(){
+  if(!activeMatch)return;
+
+  const {data,error}=await supabaseClient.from('messages')
+    .select('*')
+    .eq('match_id',activeMatch.id)
+    .order('created_at',{ascending:true});
+
+  if(error){notice('Could not load messages: '+error.message);return;}
+
+  $('chatMessages').innerHTML=(data||[]).map(m=>
+    `<div class="msg ${m.sender_id===currentUser.id?'mine':''}">${safe(m.message)}</div>`
+  ).join('');
+
+  $('chatMessages').scrollTop=$('chatMessages').scrollHeight;
+}
+
+async function sendMessage(){
+  const message=$('chatInput').value.trim();
+  if(!message||!activeMatch)return;
+
+  const receiver_id=activeMatch.user1_id===currentUser.id
+    ?activeMatch.user2_id:activeMatch.user1_id;
+
+  const {error}=await supabaseClient.from('messages').insert({
+    match_id:activeMatch.id,
+    sender_id:currentUser.id,
+    receiver_id,
+    message
+  });
+
+  if(error){notice('Could not send message: '+error.message);return;}
+
+  $('chatInput').value='';
+  await refreshMessages();
+}
+
+supabaseClient.auth.getSession().then(({data,error})=>{
+  if(error){notice(error.message);return;}
+  if(data.session){
+    currentUser=data.session.user;
+    enterApp();
+  }
+});
+</script>
+</body>
+</html>
