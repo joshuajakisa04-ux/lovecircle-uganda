@@ -66,7 +66,16 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 <nav><button onclick="loadDiscover()">Discover</button><button class="secondary" onclick="loadMyProfile()">My profile</button><button class="secondary" onclick="loadLikes()">Likes</button><button class="secondary" onclick="loadMatches()">Matches</button></nav>
 </div>
 <section id="discoverView" class="panel"><h2>Discover members</h2><p>Browse member profiles and like someone you'd like to know.</p><div id="members" class="grid"></div></section>
-<section id="profileView" class="panel hidden">
+<section id="memberProfileView" class="panel hidden">
+ <button class="secondary" onclick="loadDiscover()">← Back to Discover</button>
+ <img id="memberProfilePhoto" src="" alt="Profile photo" style="width:100%;max-width:350px;height:300px;object-fit:cover;border-radius:16px">
+ <h2 id="memberProfileName"></h2>
+ <p id="memberProfileGender"></p>
+ <p id="memberProfileLocation"></p>
+ <p id="memberProfileBio"></p>
+ <button onclick="likeMember(window.viewedMemberId)">❤️ Like</button>
+</section>
+ <section id="profileView" class="panel hidden">
 <h2>My profile</h2><input id="profileName" placeholder="Full name"><input id="profileAge" type="number" min="18" placeholder="Age (18+)">
 <select id="profileGender"><option value="">Select gender</option><option>Woman</option><option>Man</option><option>Non-binary</option><option>Prefer not to say</option></select>
 <input id="profileLocation" placeholder="Town or district"><input id="profilePhoto" placeholder="Profile photo URL (optional)">
