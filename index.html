@@ -183,6 +183,50 @@ async function openMemberProfile(id){
 
  showAppView('memberProfileView');
 }
+async function requestPhoneUnlock(){
+ const ownerId=window.viewedMemberId;
+
+ if(!ownerId||ownerId===currentUser.id){
+  notice('Invalid profile.');
+  return;
+ }
+
+ let {data,error}=await supabaseClient
+  .from('phone_unlock_requests')
+  .select('id')
+  .eq('requester_id',currentUser.id)
+  .eq('owner_id',ownerId)
+  .maybeSingle();
+
+ if(error){
+  notice('Could not check request: '+error.message);
+  return;
+ }
+
+ if(!data){
+  const result=await supabaseClient
+   .from('phone_unlock_requests')
+   .insert({requester_id:currentUser.id,owner_id:ownerId})
+   .select('id')
+   .single();
+
+  if(result.error){
+   notice('Could not create request: '+result.error.message);
+   return;
+  }
+  data=result.data;
+ }
+
+ window.pendingUnlockRequestId=data.id;
+
+ alert(
+  'LoveCircle Uganda\\n\\n' +
+  'Send UGX 1,000 to Airtel Money: 0741523616\\n\\n' +
+  'After paying, your payment will be checked manually. ' +
+  'Your requested phone number will only be revealed after confirmation.\\n\\n' +
+  'Request reference: '+data.id
+ );
+}
  async function saveProfile(){
  const full_name=$('profileName').value.trim(),age=Number($('profileAge').value),gender=$('profileGender').value,location=$('profileLocation').value.trim(),avatar_url=$('profilePhoto').value.trim(),bio=$('profileBio').value.trim();
  if(!full_name||!age||age<18){notice('Enter your name and an age of 18 or above.');return;}
