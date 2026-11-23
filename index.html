@@ -133,7 +133,10 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 </select>
 <input id="profileLocation" placeholder="Town or district">
 <input id="profilePhoto" placeholder="Profile photo URL (optional)">
-<textarea id="profileBio" placeholder="A little about yourself"></textarea>
+<label>Upload your profile picture</label>
+<input id="profilePhotoFile" type="file" accept="image/*">
+<img id="profilePhotoPreview" style="width:120px;height:120px;object-fit:cover;border-radius:50%;display:none">
+  <textarea id="profileBio" placeholder="A little about yourself"></textarea>
 <button onclick="saveProfile()">Save profile</button>
 <input id="privatePhone" type="tel" placeholder="Your phone number (e.g. 07XXXXXXXX)">
 <p class="hint">Your number stays private. It is shown only to people you mutually match with.</p>
