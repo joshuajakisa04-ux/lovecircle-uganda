@@ -258,7 +258,20 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
   .grid { grid-template-columns:1fr; }
   .member img { height:320px; }
 }
-  
+  #chatMessages,
+#chatMessages .msg,
+#chatMessages .msg.mine {
+  color: #351b2a !important;
+}
+
+#chatMessages .msg {
+  background: #fce7ef !important;
+  -webkit-text-fill-color: #351b2a !important;
+}
+
+#chatMessages .msg.mine {
+  background: #f3e8ff !important;
+  }
 </style>
 </head>
 <body>
