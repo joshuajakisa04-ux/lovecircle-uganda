@@ -464,7 +464,7 @@ async function loadStatusStrip() {
   }
 
   strip.innerHTML = (people || []).map(p => `
-    <div onclick="showAppView('statusView');loadStatuses()"
+    <div onclick="loadStatuses('${safe(p.id)}')"
       style="min-width:76px;text-align:center;cursor:pointer">
       <img src="${safe(p.avatar_url || 'https://placehold.co/100x100')}"
         style="width:65px;height:65px;border-radius:50%;object-fit:cover;border:3px solid #e83e75">
