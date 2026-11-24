@@ -61,6 +61,33 @@ button:active {
   display: none;
 }
   
+#statusCircles > div {
+  min-width: 68px;
+  text-align: center;
+}
+
+#statusCircles img {
+  width: 62px;
+  height: 62px;
+  object-fit: cover;
+  border-radius: 50%;
+  padding: 3px;
+  border: 3px solid #ff3d91;
+  box-shadow: 0 0 13px #ff267766;
+}
+
+#statusCircles img:active {
+  transform: scale(.94);
+}
+
+#statusStrip button {
+  border-radius: 50px;
+  background: linear-gradient(135deg,#ff2878,#9c124e);
+  color: white;
+  border: 1px solid #ff8abb;
+  font-weight: 900;
+}
+  
   <style>
 :root{--red:#c9184a;--deep:#8f1236;--pink:#fff0f3;--ink:#24202a;--muted:#746d78;--line:#f0dce2}
 *{box-sizing:border-box}
