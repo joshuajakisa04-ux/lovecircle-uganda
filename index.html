@@ -1455,6 +1455,75 @@ async function deleteExtraPhoto(id) {
   await loadMyPhotoGallery();
   alert('Photo deleted.');
 }
+
+async function makeMainPhoto(photoId) {
+  if (!currentUser) return;
+
+  const { data: selected, error: photoError } = await supabaseClient
+    .from('profile_photos')
+    .select('photo_url')
+    .eq('id', photoId)
+    .eq('user_id', currentUser.id)
+    .maybeSingle();
+
+  if (photoError || !selected) {
+    notice('Could not find that photo.');
+    return;
+  }
+
+  const { data: profile, error: profileError } = await supabaseClient
+    .from('profiles')
+    .select('avatar_url')
+    .eq('id', currentUser.id)
+    .maybeSingle();
+
+  if (profileError || !profile) {
+    notice('Could not load your current profile photo.');
+    return;
+  }
+
+  const oldPhoto = profile.avatar_url;
+  const newPhoto = selected.photo_url;
+
+  const { error: updateError } = await supabaseClient
+    .from('profiles')
+    .update({ avatar_url: newPhoto })
+    .eq('id', currentUser.id);
+
+  if (updateError) {
+    notice('Could not change main photo: ' + updateError.message);
+    return;
+  }
+
+  if (oldPhoto && oldPhoto !== newPhoto) {
+    const { error } = await supabaseClient
+      .from('profile_photos')
+      .update({ photo_url: oldPhoto })
+      .eq('id', photoId)
+      .eq('user_id', currentUser.id);
+
+    if (error) {
+      notice('Main photo changed, but the gallery could not be updated.');
+      return;
+    }
+  } else {
+    await supabaseClient
+      .from('profile_photos')
+      .delete()
+      .eq('id', photoId)
+      .eq('user_id', currentUser.id);
+  }
+
+  currentProfile = { ...currentProfile, avatar_url: newPhoto };
+
+  $('profilePhoto').value = newPhoto;
+  $('profilePhotoPreview').src = newPhoto;
+  $('profilePhotoPreview').style.display = 'block';
+
+  await loadMyPhotoGallery();
+  notice('Your main profile photo has been changed! ❤️');
+}
+  
 </script>
 </body>
 </html>
