@@ -629,7 +629,216 @@ async function loadMatches(){
     <button class="secondary" onclick="openChat('${safe(p.id)}')">Message</button></p>`
   ).join('');
 }
+async function createStatus() {
+  if (!currentUser) {
+    notice('Please log in first.');
+    return;
+  }
 
+  const type = $('statusType').value;
+  const caption = $('statusCaption').value.trim();
+  const file = $('statusFile').files[0];
+  let mediaUrl = 'text';
+
+  if (type === 'text' && !caption) {
+    notice('Write something for your status.');
+    return;
+  }
+
+  if (type !== 'text') {
+    if (!file) {
+      notice('Please choose a photo or video.');
+      return;
+    }
+
+    if (type === 'image' && !file.type.startsWith('image/')) {
+      notice('Please choose an image.');
+      return;
+    }
+
+    if (type === 'video' && !file.type.startsWith('video/')) {
+      notice('Please choose a video.');
+      return;
+    }
+
+    if (file.size > 30 * 1024 * 1024) {
+      notice('File is too large. Maximum size is 30MB.');
+      return;
+    }
+
+    const path = `${currentUser.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+
+    const upload = await supabaseClient.storage
+      .from('love-statuses')
+      .upload(path, file);
+
+    if (upload.error) {
+      notice('Upload failed: ' + upload.error.message);
+      return;
+    }
+
+    mediaUrl = supabaseClient.storage
+      .from('love-statuses')
+      .getPublicUrl(path).data.publicUrl;
+  }
+
+  const { error } = await supabaseClient.from('statuses').insert({
+    user_id: currentUser.id,
+    media_url: mediaUrl,
+    media_type: type,
+    caption: caption
+  });
+
+  if (error) {
+    notice('Could not post status: ' + error.message);
+    return;
+  }
+
+  $('statusCaption').value = '';
+  $('statusFile').value = '';
+  notice('Your status has been posted! ❤️');
+  await loadStatuses();
+}
+
+async function loadStatuses() {
+  if (!currentUser) return;
+
+  $('statusesList').textContent = 'Loading statuses…';
+
+  const { data: statuses, error } = await supabaseClient
+    .from('statuses')
+    .select('*')
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    $('statusesList').textContent = 'Could not load statuses: ' + error.message;
+    return;
+  }
+
+  if (!statuses.length) {
+    $('statusesList').textContent = 'No recent statuses yet. Be the first to post!';
+    return;
+  }
+
+  const ids = [...new Set(statuses.map(s => s.user_id))];
+
+  const { data: people, error: peopleError } = await supabaseClient
+    .from('profiles')
+    .select('id,full_name')
+    .in('id', ids);
+
+  if (peopleError) {
+    notice('Could not load status owners: ' + peopleError.message);
+    return;
+  }
+
+  const names = {};
+  (people || []).forEach(p => names[p.id] = p.full_name || 'Member');
+
+  $('statusesList').innerHTML = statuses.map(s => {
+    const owner = names[s.user_id] || 'Member';
+    const mine = s.user_id === currentUser.id;
+
+    let media = '';
+    if (s.media_type === 'image') {
+      media = `<img src="${safe(s.media_url)}" style="width:100%;max-width:350px;border-radius:14px">`;
+    } else if (s.media_type === 'video') {
+      media = `<video src="${safe(s.media_url)}" controls style="width:100%;max-width:350px;border-radius:14px"></video>`;
+    } else {
+      media = `<p>${safe(s.caption || '')}</p>`;
+    }
+
+    return `
+      <div class="panel">
+        <strong>${safe(owner)}</strong>
+        <p>${safe(new Date(s.created_at).toLocaleString())}</p>
+        ${media}
+        ${s.media_type !== 'text' ? `<p>${safe(s.caption || '')}</p>` : ''}
+        <button class="secondary" onclick="recordStatusView('${safe(s.id)}')">Mark as viewed</button>
+        ${mine ? `<button class="secondary" onclick="showStatusViewers('${safe(s.id)}')">View viewers</button>` : ''}
+        ${mine ? `<button class="secondary" onclick="deleteStatus('${safe(s.id)}')">Delete status</button>` : ''}
+        <div id="viewers_${safe(s.id)}"></div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function recordStatusView(statusId) {
+  if (!currentUser) return;
+
+  const { error } = await supabaseClient.from('status_views').upsert({
+    status_id: statusId,
+    viewer_id: currentUser.id
+  }, {
+    onConflict: 'status_id,viewer_id',
+    ignoreDuplicates: true
+  });
+
+  if (error) {
+    notice('Could not record view: ' + error.message);
+    return;
+  }
+
+  notice('Status viewed ❤️');
+}
+
+async function showStatusViewers(statusId) {
+  const area = $('viewers_' + statusId);
+  area.textContent = 'Loading viewers…';
+
+  const { data, error } = await supabaseClient
+    .from('status_views')
+    .select('viewer_id,viewed_at')
+    .eq('status_id', statusId)
+    .order('viewed_at', { ascending: false });
+
+  if (error) {
+    area.textContent = 'Could not load viewers: ' + error.message;
+    return;
+  }
+
+  if (!data.length) {
+    area.textContent = 'Nobody has viewed this status yet.';
+    return;
+  }
+
+  const ids = [...new Set(data.map(v => v.viewer_id))];
+
+  const { data: people, error: peopleError } = await supabaseClient
+    .from('profiles')
+    .select('id,full_name')
+    .in('id', ids);
+
+  if (peopleError) {
+    area.textContent = 'Could not load viewer names.';
+    return;
+  }
+
+  const names = {};
+  (people || []).forEach(p => names[p.id] = p.full_name || 'Member');
+
+  area.innerHTML = '<strong>Viewed by:</strong><br>' +
+    data.map(v => `<p>${safe(names[v.viewer_id] || 'Member')}</p>`).join('');
+}
+
+async function deleteStatus(statusId) {
+  if (!confirm('Delete this status?')) return;
+
+  const { error } = await supabaseClient
+    .from('statuses')
+    .delete()
+    .eq('id', statusId)
+    .eq('user_id', currentUser.id);
+
+  if (error) {
+    notice('Could not delete status: ' + error.message);
+    return;
+  }
+
+  notice('Status deleted.');
+  await loadStatuses();
+  }
 async function openChat(otherId){
   const match=(window.matchRows||[]).find(m=>
     (m.user1_id===currentUser.id&&m.user2_id===otherId)||
