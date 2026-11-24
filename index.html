@@ -1074,10 +1074,29 @@ const unreadCounts = {};
 (unreadMessages || []).forEach(m => {
   unreadCounts[m.sender_id] = (unreadCounts[m.sender_id] || 0) + 1;
 });
-  $('matchesList').innerHTML=people.data.map(p=>
-    `<p><strong>${safe(p.full_name)}</strong> — ${safe(p.location||'Uganda')}
-    <button class="secondary" onclick="openChat('${safe(p.id)}')">Message</button></p>`
-  ).join('');
+  
+$('matchesList').innerHTML = people.data.map(p => {
+  const count = unreadCounts[p.id] || 0;
+
+  return `
+    <p style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <span>
+        <strong>${safe(p.full_name)}</strong> — ${safe(p.location || 'Uganda')}
+      </span>
+
+      ${count > 0 ? `
+        <span style="background:#e91e63;color:white;padding:5px 10px;border-radius:20px;font-size:12px;font-weight:bold">
+          ${count} new
+        </span>
+      ` : ''}
+
+      <button class="secondary" onclick="openChat('${safe(p.id)}')">
+        Message
+      </button>
+    </p>
+  `;
+}).join('');
+  
 }
 async function createStatus() {
   if (!currentUser) {
