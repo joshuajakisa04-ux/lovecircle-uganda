@@ -581,6 +581,7 @@ async function saveProfile() {
 
 async function loadMyProfile() {
   showAppView('profileView');
+
   const {data,error} = await supabaseClient.from('profiles')
     .select('*').eq('id',currentUser.id).maybeSingle();
 
@@ -590,12 +591,26 @@ async function loadMyProfile() {
   }
 
   const p = data || currentProfile || {};
+
   $('profileName').value = p.full_name || '';
   $('profileAge').value = p.age || '';
   $('profileGender').value = p.gender || '';
   $('profileLocation').value = p.location || '';
   $('profilePhoto').value = p.avatar_url || '';
   $('profileBio').value = p.bio || '';
+
+  const preview = $('profilePhotoPreview');
+
+  if (preview) {
+    if (p.avatar_url) {
+      preview.src = p.avatar_url;
+      preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+
+  currentProfile = p;
 }
 
 async function likeMember(id) {
