@@ -425,7 +425,56 @@ async function loadDiscover() {
   renderOnlineDots();
 }
 
-function safe(s) {
+async function loadStatusStrip() {
+  const strip = $('statusCircles');
+  if (!strip || !currentUser) return;
+
+  strip.innerHTML = 'Loading…';
+
+  const { data: statuses, error } = await supabaseClient
+    .from('statuses')
+    .select('user_id')
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    strip.textContent = 'Could not load statuses';
+    return;
+  }
+
+  const ids = [...new Set(
+    (statuses || [])
+      .map(s => s.user_id)
+      .filter(id => id !== currentUser.id)
+  )];
+
+  if (!ids.length) {
+    strip.innerHTML = '<span>No other statuses yet</span>';
+    return;
+  }
+
+  const { data: people, error: peopleError } = await supabaseClient
+    .from('profiles')
+    .select('id,full_name,avatar_url')
+    .in('id', ids);
+
+  if (peopleError) {
+    strip.textContent = 'Could not load members';
+    return;
+  }
+
+  strip.innerHTML = (people || []).map(p => `
+    <div onclick="showAppView('statusView');loadStatuses()"
+      style="min-width:76px;text-align:center;cursor:pointer">
+      <img src="${safe(p.avatar_url || 'https://placehold.co/100x100')}"
+        style="width:65px;height:65px;border-radius:50%;object-fit:cover;border:3px solid #e83e75">
+      <div style="font-size:12px;margin-top:5px">
+        ${safe(p.full_name || 'Member')}
+      </div>
+    </div>
+  `).join('');
+}
+  function safe(s) {
   return String(s ?? '').replace(/[&<>"']/g,c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
