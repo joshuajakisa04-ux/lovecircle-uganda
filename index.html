@@ -509,13 +509,22 @@ async function openMemberProfile(id) {
   }
 
   window.viewedMemberId = data.id;
-  $('memberProfilePhoto').src = data.avatar_url || 'https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle';
-  $('memberProfileName').textContent = (data.full_name || 'LoveCircle member') + (data.age ? ', '+data.age : '');
+
+  const photo = $('memberProfilePhoto');
+  photo.src = data.avatar_url || 'https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle';
+  photo.onerror = function() {
+    this.src = 'https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle';
+  };
+
+  $('memberProfileName').textContent =
+    (data.full_name || 'LoveCircle member') + (data.age ? ', '+data.age : '');
+
   $('memberProfileGender').textContent = data.gender || '';
   $('memberProfileLocation').textContent = data.location || 'Uganda';
   $('memberProfileBio').textContent = data.bio || 'No bio added yet.';
+
   showAppView('memberProfileView');
-}
+  }
 
 async function showMatchedPhone() {
   const otherId = window.viewedMemberId;
