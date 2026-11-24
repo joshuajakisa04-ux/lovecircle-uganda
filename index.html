@@ -358,7 +358,15 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 <input id="profilePhoto" placeholder="Profile photo URL (optional)">
 <label>Upload your profile picture</label>
 <input id="profilePhotoFile" type="file" accept="image/*">
-<img id="profilePhotoPreview" style="width:120px;height:120px;object-fit:cover;border-radius:50%;display:none">
+
+<div class="panel" style="margin-top:18px;background:#251321;color:white">
+  <h3 style="color:#ff8abb">📸 My Photo Gallery</h3>
+  <p style="color:#e9cbd7">Add up to 5 more photos to your profile.</p>
+  <input id="extraProfilePhotos" type="file" accept="image/*" multiple>
+  <button type="button" onclick="uploadExtraPhotos()">Upload Gallery Photos ❤️</button>
+  <div id="myPhotoGallery" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:15px"></div>
+</div>
+  
   <textarea id="profileBio" placeholder="A little about yourself"></textarea>
 <button onclick="saveProfile()">Save profile</button>
 <input id="privatePhone" type="tel" placeholder="Your phone number (e.g. 07XXXXXXXX)">
