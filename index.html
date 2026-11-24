@@ -402,6 +402,8 @@ async function loadDiscover() {
   showAppView('discoverView');
   $('members').innerHTML = '<p>Loading members…</p>';
 
+  await loadStatusStrip();
+
   const {data,error} = await supabaseClient.from('profiles')
     .select('id,full_name,age,gender,location,bio,avatar_url,is_online,last_seen')
     .neq('id',currentUser.id)
