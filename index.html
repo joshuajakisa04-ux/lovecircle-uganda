@@ -106,7 +106,16 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 </div>
 
 <section id="discoverView" class="panel">
-<h2>Discover members</h2>
+<div class="panel">
+  <h3>❤️ Status updates</h3>
+  <div id="statusStrip" style="display:flex;gap:16px;overflow-x:auto;padding:12px 4px;">
+    <button onclick="showAppView('statusView');loadStatuses()">
+      ➕ My Status
+    </button>
+    <div id="statusCircles" style="display:flex;gap:16px;"></div>
+  </div>
+</div>
+  <h2>Discover members</h2>
 <p>Browse member profiles and like someone you'd like to know.</p>
 <div id="members" class="grid"></div>
 </section>
