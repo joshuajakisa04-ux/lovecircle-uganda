@@ -7,7 +7,61 @@
 <link rel="manifest" href="./manifest.json">
   <title>LoveCircle Uganda</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
+
+/* LOVE CIRCLE — LUXURY LOOK */
+body {
+  background:
+    radial-gradient(ellipse at top, #421329 0%, #170d16 48%, #09080d 100%);
+  color: #fff;
+}
+
+.panel {
+  background: linear-gradient(145deg, #251321, #120d15) !important;
+  border: 1px solid #59223f !important;
+  border-radius: 22px !important;
+  box-shadow: 0 12px 35px #0008, 0 0 18px #e91e6320;
+}
+
+#discoverView h2,
+#discoverView h3 {
+  color: #ffb5d0;
+  font-weight: 900;
+}
+
+button {
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+button:not(:disabled) {
+  box-shadow: 0 5px 18px #e91e6330;
+}
+
+button:active {
+  transform: scale(.96);
+}
+
+.member {
+  border: 1px solid #8d315b;
+  box-shadow: 0 12px 30px #0009, 0 0 15px #e91e6325;
+}
+
+.member img {
+  height: 245px;
+}
+
+.member .body {
+  background: linear-gradient(180deg, #21101c, #100b12);
+}
+
+#statusStrip {
+  scrollbar-width: none;
+}
+
+#statusStrip::-webkit-scrollbar {
+  display: none;
+}
+  
+  <style>
 :root{--red:#c9184a;--deep:#8f1236;--pink:#fff0f3;--ink:#24202a;--muted:#746d78;--line:#f0dce2}
 *{box-sizing:border-box}
 body{margin:0;background:#fff8fa;color:var(--ink);font:16px/1.5 system-ui,sans-serif}
