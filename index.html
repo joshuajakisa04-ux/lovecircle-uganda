@@ -1057,7 +1057,23 @@ async function loadMatches(){
     .in('id',ids);
 
   if(people.error){notice(people.error.message);return;}
+const { data: unreadMessages, error: unreadError } =
+  await supabaseClient
+    .from('messages')
+    .select('sender_id')
+    .eq('receiver_id', currentUser.id)
+    .eq('is_read', false);
 
+if (unreadError) {
+  notice('Could not load unread messages: ' + unreadError.message);
+  return;
+}
+
+const unreadCounts = {};
+
+(unreadMessages || []).forEach(m => {
+  unreadCounts[m.sender_id] = (unreadCounts[m.sender_id] || 0) + 1;
+});
   $('matchesList').innerHTML=people.data.map(p=>
     `<p><strong>${safe(p.full_name)}</strong> — ${safe(p.location||'Uganda')}
     <button class="secondary" onclick="openChat('${safe(p.id)}')">Message</button></p>`
