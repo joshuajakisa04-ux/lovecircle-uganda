@@ -235,8 +235,21 @@ nav button:active {
 #notice{padding:11px 14px;border-radius:12px;background:#fff0f3;color:#8f1236;margin:12px 0;display:none}
 #notice.show{display:block}
 .chatbox{border:1px solid var(--line);border-radius:12px;padding:12px;min-height:120px;max-height:280px;overflow:auto;background:#fffafd}
-.msg{padding:8px 10px;border-radius:12px;background:#fce7ef;margin:7px 0;max-width:85%}
-.msg.mine{background:#f3e8ff;margin-left:auto}
+.msg {
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: #fce7ef;
+  color: #351b2a !important;
+  margin: 7px 0;
+  max-width: 85%;
+  font-weight: 600;
+}
+
+.msg.mine {
+  background: #f3e8ff;
+  color: #351b2a !important;
+  margin-left: auto;
+}
 footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 
 @media(max-width:560px) {
