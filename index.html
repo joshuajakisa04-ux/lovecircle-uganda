@@ -1341,9 +1341,19 @@ async function refreshMessages(){
 
   if(error){notice('Could not load messages: '+error.message);return;}
 
-  $('chatMessages').innerHTML=(data||[]).map(m=>
-    `<div class="msg ${m.sender_id===currentUser.id?'mine':''}">${safe(m.message)}</div>`
-  ).join('');
+  $('chatMessages').innerHTML=(data||[]).map(m=>{
+  const time = new Date(m.created_at).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  return `<div class="msg ${m.sender_id===currentUser.id?'mine':''}">
+    ${safe(m.message)}
+    <small style="display:block;text-align:right;font-size:11px;opacity:.7;margin-top:5px">
+      ${time}
+    </small>
+  </div>`;
+}).join('');
 
   $('chatMessages').scrollTop=$('chatMessages').scrollHeight;
 }
