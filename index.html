@@ -1332,31 +1332,40 @@ async function openChat(otherId) {
   
 
 async function refreshMessages(){
-  if(!activeMatch)return;
 
-  const {data,error}=await supabaseClient.from('messages')
+async function refreshMessages() {
+  if (!activeMatch) return;
+
+  const { data, error } = await supabaseClient
+    .from('messages')
     .select('*')
-    .eq('match_id',activeMatch.id)
-    .order('created_at',{ascending:true});
+    .eq('match_id', activeMatch.id)
+    .order('created_at', { ascending: true });
 
-  if(error){notice('Could not load messages: '+error.message);return;}
+  if (error) {
+    notice('Could not load messages: ' + error.message);
+    return;
+  }
 
-  $('chatMessages').innerHTML=(data||[]).map(m=>{
-  const time = new Date(m.created_at).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  $('chatMessages').innerHTML = (data || []).map(m => {
+    const time = new Date(m.created_at).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
 
-  return `<div class="msg ${m.sender_id===currentUser.id?'mine':''}">
-    ${safe(m.message)}
-    <small style="display:block;text-align:right;font-size:11px;opacity:.7;margin-top:5px">
-      ${time}
-    </small>
-  </div>`;
-}).join('');
+    return `
+      <div class="msg ${m.sender_id === currentUser.id ? 'mine' : ''}">
+        ${safe(m.message)}
+        <small style="display:block;text-align:right;font-size:11px;color:#65445a;margin-top:5px">
+          ${time}
+        </small>
+      </div>
+    `;
+  }).join('');
 
-  $('chatMessages').scrollTop=$('chatMessages').scrollHeight;
+  $('chatMessages').scrollTop = $('chatMessages').scrollHeight;
 }
+  
 
 async function sendMessage(){
   const message=$('chatInput').value.trim();
