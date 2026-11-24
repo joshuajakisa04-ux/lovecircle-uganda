@@ -760,24 +760,31 @@ async function createStatus() {
   await loadStatuses();
 }
 
-async function loadStatuses() {
+async function loadStatuses(userId = null) {
   if (!currentUser) return;
 
+  showAppView('statusView');
   $('statusesList').textContent = 'Loading statuses…';
 
-  const { data: statuses, error } = await supabaseClient
+  let request = supabaseClient
     .from('statuses')
     .select('*')
     .gt('expires_at', new Date().toISOString())
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: true });
+
+  if (userId) {
+    request = request.eq('user_id', userId);
+  }
+
+  const { data: statuses, error } = await request;
 
   if (error) {
     $('statusesList').textContent = 'Could not load statuses: ' + error.message;
     return;
   }
 
-  if (!statuses.length) {
-    $('statusesList').textContent = 'No recent statuses yet. Be the first to post!';
+  if (!statuses || !statuses.length) {
+    $('statusesList').textContent = 'No active statuses yet.';
     return;
   }
 
@@ -801,10 +808,11 @@ async function loadStatuses() {
     const mine = s.user_id === currentUser.id;
 
     let media = '';
+
     if (s.media_type === 'image') {
       media = `<img src="${safe(s.media_url)}" style="width:100%;max-width:350px;border-radius:14px">`;
     } else if (s.media_type === 'video') {
-      media = `<video src="${safe(s.media_url)}" controls style="width:100%;max-width:350px;border-radius:14px"></video>`;
+      media = `<video src="${safe(s.media_url)}" controls playsinline style="width:100%;max-width:350px;border-radius:14px"></video>`;
     } else {
       media = `<p>${safe(s.caption || '')}</p>`;
     }
@@ -815,7 +823,7 @@ async function loadStatuses() {
         <p>${safe(new Date(s.created_at).toLocaleString())}</p>
         ${media}
         ${s.media_type !== 'text' ? `<p>${safe(s.caption || '')}</p>` : ''}
-        <button class="secondary" onclick="recordStatusView('${safe(s.id)}')">Mark as viewed</button>
+        ${!mine ? `<button class="secondary" onclick="recordStatusView('${safe(s.id)}')">Mark as viewed</button>` : ''}
         ${mine ? `<button class="secondary" onclick="showStatusViewers('${safe(s.id)}')">View viewers</button>` : ''}
         ${mine ? `<button class="secondary" onclick="deleteStatus('${safe(s.id)}')">Delete status</button>` : ''}
         <div id="viewers_${safe(s.id)}"></div>
