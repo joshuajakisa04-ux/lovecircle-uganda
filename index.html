@@ -79,8 +79,37 @@ button.secondary{background:var(--pink);color:var(--deep)}
 button.ghost{background:transparent;color:var(--deep);border:1px solid var(--line)}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .row>*{flex:1}
-nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
-nav button{flex:1;min-width:105px}
+
+nav {
+  display: flex;
+  gap: 9px;
+  overflow-x: auto;
+  padding: 12px 4px;
+  margin-bottom: 18px;
+  scrollbar-width: none;
+}
+
+nav::-webkit-scrollbar {
+  display: none;
+}
+
+nav button {
+  flex: 0 0 auto;
+  padding: 11px 17px;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #291322, #48152f);
+  color: #ffc1d9;
+  border: 1px solid #853456;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 4px 14px #0005;
+}
+
+nav button:active {
+  background: linear-gradient(135deg, #ff2878, #a80050);
+  color: white;
+}
+    
 .hidden{display:none!important}
 .hint{font-size:13px;color:var(--muted)}
 
