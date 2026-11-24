@@ -764,22 +764,63 @@ async function showMatchedPhone() {
 }
 
 
+
 async function saveProfile() {
   const full_name = $('profileName').value.trim();
   const age = Number($('profileAge').value);
   const gender = $('profileGender').value;
   const location = $('profileLocation').value.trim();
-  const avatar_url = $('profilePhoto').value.trim();
   const bio = $('profileBio').value.trim();
+
+  const file = $('profilePhotoFile')?.files?.[0];
+  let avatar_url = $('profilePhoto').value.trim();
 
   if (!full_name || !age || age < 18) {
     notice('Enter your name and an age of 18 or above.');
     return;
   }
 
-  const {data,error} = await supabaseClient.from('profiles').upsert({
-    id:currentUser.id,full_name,age,gender,location,avatar_url,bio
-  },{onConflict:'id'}).select().single();
+  // Upload selected profile photo
+  if (file) {
+    if (!file.type.startsWith('image/')) {
+      notice('Please select an image.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      notice('Photo must be smaller than 5MB.');
+      return;
+    }
+
+    const path = `${currentUser.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+
+    const upload = await supabaseClient.storage
+      .from('profile-photos')
+      .upload(path, file);
+
+    if (upload.error) {
+      notice('Photo upload failed: ' + upload.error.message);
+      return;
+    }
+
+    avatar_url = supabaseClient.storage
+      .from('profile-photos')
+      .getPublicUrl(path).data.publicUrl;
+  }
+
+  const {data,error} = await supabaseClient
+    .from('profiles')
+    .upsert({
+      id: currentUser.id,
+      full_name,
+      age,
+      gender,
+      location,
+      avatar_url,
+      bio
+    }, {onConflict:'id'})
+    .select()
+    .single();
 
   if (error) {
     notice('Could not save profile: ' + error.message);
@@ -787,10 +828,12 @@ async function saveProfile() {
   }
 
   const phone = $('privatePhone').value.trim();
+
   if (phone) {
-    const saved = await supabaseClient.rpc('set_my_private_phone',{
-      p_phone_number:phone
+    const saved = await supabaseClient.rpc('set_my_private_phone', {
+      p_phone_number: phone
     });
+
     if (saved.error) {
       notice('Profile saved, but phone number could not be saved: ' + saved.error.message);
       return;
@@ -798,8 +841,19 @@ async function saveProfile() {
   }
 
   currentProfile = data;
-  notice('Your profile has been saved. Your phone number remains private until a mutual match.');
-}
+  $('profilePhoto').value = avatar_url;
+
+  const preview = $('profilePhotoPreview');
+  if (preview && avatar_url) {
+    preview.src = avatar_url;
+    preview.style.display = 'block';
+  }
+
+  $('profilePhotoFile').value = '';
+
+  notice('Your profile and photo have been saved successfully! ❤️');
+      }
+  
 
 async function loadMyProfile() {
   showAppView('profileView');
