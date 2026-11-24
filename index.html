@@ -1277,6 +1277,126 @@ if ('serviceWorker' in navigator) {
       .catch(error => console.error('Service worker error:', error));
   });
 }
+async function uploadExtraPhotos() {
+  const input = document.getElementById('extraProfilePhotos');
+  const files = Array.from(input.files || []);
+
+  if (!currentUser) {
+    alert('Please log in first.');
+    return;
+  }
+
+  if (!files.length) {
+    alert('Please select photos first.');
+    return;
+  }
+
+  const { data: existing, error: countError } = await supabaseClient
+    .from('profile_photos')
+    .select('id')
+    .eq('user_id', currentUser.id);
+
+  if (countError) {
+    alert(countError.message);
+    return;
+  }
+
+  if (existing.length + files.length > 5) {
+    alert('You can add only 5 extra photos.');
+    return;
+  }
+
+  for (const file of files) {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select image files only.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Each photo must be 5 MB or smaller.');
+      return;
+    }
+
+    const path = `${currentUser.id}/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+
+    const { error: uploadError } = await supabaseClient.storage
+      .from('profile-photos')
+      .upload(path, file);
+
+    if (uploadError) {
+      alert(uploadError.message);
+      return;
+    }
+
+    const { data: publicData } = supabaseClient.storage
+      .from('profile-photos')
+      .getPublicUrl(path);
+
+    const { error: saveError } = await supabaseClient
+      .from('profile_photos')
+      .insert({
+        user_id: currentUser.id,
+        photo_url: publicData.publicUrl
+      });
+
+    if (saveError) {
+      alert(saveError.message);
+      return;
+    }
+  }
+
+  input.value = '';
+  await loadMyPhotoGallery();
+  alert('Your gallery photos have been uploaded! ❤️');
+}
+
+async function loadMyPhotoGallery() {
+  if (!currentUser) return;
+
+  const gallery = document.getElementById('myPhotoGallery');
+  if (!gallery) return;
+
+  const { data, error } = await supabaseClient
+    .from('profile_photos')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    gallery.innerHTML = 'Could not load photos.';
+    return;
+  }
+
+  gallery.innerHTML = (data || []).map(photo => `
+    <div style="position:relative">
+      <img src="${photo.photo_url}"
+        style="width:100%;height:115px;object-fit:cover;border-radius:12px">
+      <button type="button"
+        onclick="deleteExtraPhoto('${photo.id}')"
+        style="width:100%;padding:6px;margin-top:4px">
+        Delete
+      </button>
+    </div>
+  `).join('');
+}
+
+async function deleteExtraPhoto(id) {
+  if (!confirm('Delete this gallery photo?')) return;
+
+  const { error } = await supabaseClient
+    .from('profile_photos')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', currentUser.id);
+
+  if (error) {
+    alert(error.message);
+    return;
+  }
+
+  await loadMyPhotoGallery();
+  alert('Photo deleted.');
+}
 </script>
 </body>
 </html>
