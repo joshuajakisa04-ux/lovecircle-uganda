@@ -105,13 +105,22 @@ nav button{flex:1;min-width:105px}
   transform: scale(.97);
 }
 
+
 .member img {
   display: block;
   width: 100%;
-  height: 230px;
+  height: 245px;
   object-fit: cover;
   background: #321322;
+  border-bottom: 2px solid #e93680;
+  filter: saturate(1.12) contrast(1.04);
 }
+
+.member:hover {
+  border-color: #ff4d91;
+  box-shadow: 0 0 22px #ff267755;
+}
+    
 
 .member .body {
   padding: 12px;
