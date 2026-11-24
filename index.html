@@ -336,7 +336,12 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 <section id="memberProfileView" class="panel hidden">
 <button class="secondary" onclick="loadDiscover()">← Back to Discover</button>
 <img id="memberProfilePhoto" src="" alt="Profile photo" style="width:100%;max-width:350px;height:300px;object-fit:cover;border-radius:16px">
-<h2 id="memberProfileName"></h2>
+<div id="memberPhotoGallery" style="text-align:center;margin:12px 0">
+  <button type="button" onclick="changeMemberPhoto(-1)">❮</button>
+  <span id="memberPhotoCount" style="margin:0 15px">1 / 1</span>
+  <button type="button" onclick="changeMemberPhoto(1)">❯</button>
+    </div>
+  <h2 id="memberProfileName"></h2>
 <p id="memberProfileGender"></p>
 <p id="memberProfileLocation"></p>
 <p id="memberProfileBio"></p>
