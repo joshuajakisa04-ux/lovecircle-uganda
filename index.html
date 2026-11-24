@@ -29,11 +29,71 @@ nav{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 nav button{flex:1;min-width:105px}
 .hidden{display:none!important}
 .hint{font-size:13px;color:var(--muted)}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-.member{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff}
-.member img{width:100%;height:220px;object-fit:cover;background:var(--pink)}
-.member .body{padding:14px}
-.member h3{margin:0 0 5px}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.member {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid #4b172c;
+  border-radius: 20px;
+  background: linear-gradient(160deg, #24101b, #100b10);
+  color: white;
+  box-shadow: 0 10px 28px #5b102b25;
+  transition: transform .2s ease;
+}
+
+.member:active {
+  transform: scale(.97);
+}
+
+.member img {
+  display: block;
+  width: 100%;
+  height: 230px;
+  object-fit: cover;
+  background: #321322;
+}
+
+.member .body {
+  padding: 12px;
+  color: white;
+}
+
+.member h3 {
+  margin: 0 0 7px;
+  color: white;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.member p {
+  color: #e9cbd7;
+  font-size: 13px;
+}
+
+.member .pill {
+  background: #54172f;
+  color: #ffb5cf;
+}
+
+.member button {
+  width: 100%;
+  margin: 5px 0;
+  border-radius: 25px;
+  background: linear-gradient(135deg, #e11d65, #9d174d);
+}
+
+.member button.secondary {
+  background: #381525;
+  color: #ffb5cf;
+  border: 1px solid #75334f;
+}
+  
 .online,.offline{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
 .online{background:#16a34a}
 .offline{background:#9ca3af}
