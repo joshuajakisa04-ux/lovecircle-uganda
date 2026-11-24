@@ -724,10 +724,14 @@ function memberCard(p) {
   </article>`;
 }
 
+
+window.memberPhotos = [];
+window.memberPhotoIndex = 0;
+
 async function openMemberProfile(id) {
-  const {data,error} = await supabaseClient.from('profiles')
+  const {data, error} = await supabaseClient.from('profiles')
     .select('id,full_name,age,gender,location,bio,avatar_url')
-    .eq('id',id).maybeSingle();
+    .eq('id', id).maybeSingle();
 
   if (error || !data) {
     notice('Could not open this profile.');
@@ -736,21 +740,60 @@ async function openMemberProfile(id) {
 
   window.viewedMemberId = data.id;
 
-  const photo = $('memberProfilePhoto');
-  photo.src = data.avatar_url || 'https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle';
-  photo.onerror = function() {
-    this.src = 'https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle';
-  };
+  const {data: extras, error: photoError} = await supabaseClient
+    .from('profile_photos')
+    .select('photo_url')
+    .eq('user_id', id)
+    .order('created_at', {ascending: true});
+
+  if (photoError) {
+    notice('Could not load gallery photos: ' + photoError.message);
+    return;
+  }
+
+  window.memberPhotos = [
+    ...(data.avatar_url ? [data.avatar_url] : []),
+    ...(extras || []).map(p => p.photo_url)
+  ];
+
+  window.memberPhotos = [...new Set(window.memberPhotos)];
+  window.memberPhotoIndex = 0;
+
+  if (!window.memberPhotos.length) {
+    window.memberPhotos = [
+      'https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle'
+    ];
+  }
+
+  changeMemberPhoto(0);
 
   $('memberProfileName').textContent =
-    (data.full_name || 'LoveCircle member') + (data.age ? ', '+data.age : '');
+    (data.full_name || 'LoveCircle member') + (data.age ? ', ' + data.age : '');
 
   $('memberProfileGender').textContent = data.gender || '';
   $('memberProfileLocation').textContent = data.location || 'Uganda';
   $('memberProfileBio').textContent = data.bio || 'No bio added yet.';
 
   showAppView('memberProfileView');
-  }
+}
+
+function changeMemberPhoto(direction) {
+  const photos = window.memberPhotos || [];
+  if (!photos.length) return;
+
+  window.memberPhotoIndex =
+    (window.memberPhotoIndex + direction + photos.length) % photos.length;
+
+  const photo = $('memberProfilePhoto');
+  photo.src = photos[window.memberPhotoIndex];
+  photo.onerror = function() {
+    this.src = 'https://placehold.co/600x600/fff0f3/8f1236?text=LoveCircle';
+  };
+
+  $('memberPhotoCount').textContent =
+    `${window.memberPhotoIndex + 1} / ${photos.length}`;
+}
+  
 
 async function showMatchedPhone() {
   const otherId = window.viewedMemberId;
