@@ -1281,23 +1281,55 @@ async function deleteStatus(statusId) {
   notice('Status deleted.');
   await loadStatuses();
   }
-async function openChat(otherId){
-  const match=(window.matchRows||[]).find(m=>
-    (m.user1_id===currentUser.id&&m.user2_id===otherId)||
-    (m.user2_id===currentUser.id&&m.user1_id===otherId)
+
+async function openChat(otherId) {
+  const match = (window.matchRows || []).find(m =>
+    (m.user1_id === currentUser.id && m.user2_id === otherId) ||
+    (m.user2_id === currentUser.id && m.user1_id === otherId)
   );
 
-  if(!match){notice('Match not found.');return;}
+  if (!match) {
+    notice('Match not found.');
+    return;
+  }
 
-  activeMatch=match;
+  if (window.chatChannel) {
+    await supabaseClient.removeChannel(window.chatChannel);
+    window.chatChannel = null;
+  }
 
-  const {data:person}=await supabaseClient.from('profiles')
-    .select('full_name').eq('id',otherId).maybeSingle();
+  activeMatch = match;
 
-  $('chatTitle').textContent='Chat with '+(person?.full_name||'member');
+  const { data: person } = await supabaseClient
+    .from('profiles')
+    .select('full_name')
+    .eq('id', otherId)
+    .maybeSingle();
+
+  $('chatTitle').textContent =
+    'Chat with ' + (person?.full_name || 'member');
+
   $('chatArea').classList.remove('hidden');
+
   await refreshMessages();
+
+  window.chatChannel = supabaseClient
+    .channel('chat-' + match.id)
+    .on(
+      'postgres_changes',
+      {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: 'match_id=eq.' + match.id
+      },
+      async () => {
+        await refreshMessages();
+      }
+    )
+    .subscribe();
 }
+  
 
 async function refreshMessages(){
   if(!activeMatch)return;
