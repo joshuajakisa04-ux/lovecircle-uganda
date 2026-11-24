@@ -158,6 +158,28 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:20px}
 </div>
 </div>
 </section>
+<section id="statusView" class="panel hidden">
+  <h2>❤️ LoveCircle Status</h2>
+  <p>Share a moment with your connections.</p>
+
+  <div class="panel">
+    <h3>Create a status</h3>
+    <select id="statusType">
+      <option value="text">Text status</option>
+      <option value="image">Photo status</option>
+      <option value="video">Video status</option>
+    </select>
+
+    <textarea id="statusCaption" placeholder="What's happening?"></textarea>
+
+    <input id="statusFile" type="file" accept="image/*,video/*">
+
+    <button onclick="createStatus()">Post status ❤️</button>
+  </div>
+
+  <h3>Recent statuses</h3>
+  <div id="statusesList"></div>
+</section>
 </section>
 
 <footer>LoveCircle Uganda • 18+ only • Be kind, stay safe</footer>
