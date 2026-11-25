@@ -1355,8 +1355,9 @@ $('matchesList').innerHTML = people.data.map(p => {
     </p>
   `;
 }).join('');
-  
-}
+
+  await loadNotificationBadge();
+  }
 async function createStatus() {
   if (!currentUser) {
     notice('Please log in first.');
