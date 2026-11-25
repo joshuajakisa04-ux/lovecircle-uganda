@@ -770,7 +770,79 @@ function memberCard(p) {
 
 window.memberPhotos = [];
 window.memberPhotoIndex = 0;
+async function loadFavoriteState(userId) {
+  if (!currentUser || !userId) return;
 
+  const { data, error } = await supabaseClient
+    .from('favorites')
+    .select('id')
+    .eq('user_id', currentUser.id)
+    .eq('favorite_user_id', userId)
+    .maybeSingle();
+
+  if (error) {
+    notice('Could not check favourites: ' + error.message);
+    return;
+  }
+
+  const button = $('favoriteButton');
+  if (button) {
+    button.textContent = data
+      ? '⭐ Remove from Favourites'
+      : '⭐ Add to Favourites';
+  }
+}
+
+async function toggleFavorite(userId) {
+  if (!currentUser || !userId) return;
+
+  if (userId === currentUser.id) {
+    notice('You cannot favourite your own profile.');
+    return;
+  }
+
+  const { data: existing, error: checkError } = await supabaseClient
+    .from('favorites')
+    .select('id')
+    .eq('user_id', currentUser.id)
+    .eq('favorite_user_id', userId)
+    .maybeSingle();
+
+  if (checkError) {
+    notice('Could not check favourite: ' + checkError.message);
+    return;
+  }
+
+  if (existing) {
+    const { error } = await supabaseClient
+      .from('favorites')
+      .delete()
+      .eq('id', existing.id);
+
+    if (error) {
+      notice('Could not remove favourite: ' + error.message);
+      return;
+    }
+
+    $('favoriteMessage').textContent = 'Removed from your favourites.';
+  } else {
+    const { error } = await supabaseClient
+      .from('favorites')
+      .insert({
+        user_id: currentUser.id,
+        favorite_user_id: userId
+      });
+
+    if (error) {
+      notice('Could not add favourite: ' + error.message);
+      return;
+    }
+
+    $('favoriteMessage').textContent = 'Saved to your favourites! ⭐';
+  }
+
+  await loadFavoriteState(userId);
+  }
 async function openMemberProfile(id) {
   const {data, error} = await supabaseClient.from('profiles')
     .select('id,full_name,age,gender,location,bio,avatar_url')
