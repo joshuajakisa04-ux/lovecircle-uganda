@@ -890,6 +890,7 @@ async function openMemberProfile(id) {
   $('memberProfileBio').textContent = data.bio || 'No bio added yet.';
 
   showAppView('memberProfileView');
+await loadFavoriteState(data.id);
 }
 
 function changeMemberPhoto(direction) {
