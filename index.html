@@ -1366,10 +1366,11 @@ async function openChat(otherId) {
 }
   
 
-async function refreshMessages(){
 
 async function refreshMessages() {
   if (!activeMatch) return;
+
+  if ($('chatArea').classList.contains('hidden')) return;
 
   const { data, error } = await supabaseClient
     .from('messages')
@@ -1381,12 +1382,7 @@ async function refreshMessages() {
     notice('Could not load messages: ' + error.message);
     return;
   }
-await supabaseClient
-  .from('messages')
-  .update({ is_read: true })
-  .eq('match_id', activeMatch.id)
-  .eq('receiver_id', currentUser.id)
-  .eq('is_read', false);
+
   $('chatMessages').innerHTML = (data || []).map(m => {
     const time = new Date(m.created_at).toLocaleTimeString([], {
       hour: '2-digit',
@@ -1404,7 +1400,19 @@ await supabaseClient
   }).join('');
 
   $('chatMessages').scrollTop = $('chatMessages').scrollHeight;
-}
+
+  const { error: readError } = await supabaseClient
+    .from('messages')
+    .update({ is_read: true })
+    .eq('match_id', activeMatch.id)
+    .eq('receiver_id', currentUser.id)
+    .eq('is_read', false);
+
+  if (readError) {
+    notice('Could not mark messages as read: ' + readError.message);
+  }
+      }
+  
   
 
 async function sendMessage(){
