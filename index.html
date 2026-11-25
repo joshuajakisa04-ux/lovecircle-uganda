@@ -679,7 +679,57 @@ function renderOnlineDots() {
     }
   });
 }
+async function loadFavorites() {
+  showAppView('favoritesView');
 
+  $('favoritesList').innerHTML = '<p>Loading your favourites...</p>';
+
+  const { data: saved, error: savedError } = await supabaseClient
+    .from('favorites')
+    .select('favorite_user_id, created_at')
+    .eq('user_id', currentUser.id)
+    .order('created_at', { ascending: false });
+
+  if (savedError) {
+    $('favoritesList').innerHTML = '';
+    notice('Could not load favourites: ' + savedError.message);
+    return;
+  }
+
+  if (!saved || !saved.length) {
+    $('favoritesList').innerHTML =
+      '<p>You have no favourites yet. Visit Discover and tap ⭐ to save a profile.</p>';
+    return;
+  }
+
+  const favoriteIds = saved.map(f => f.favorite_user_id);
+
+  const { data: profiles, error: profileError } = await supabaseClient
+    .from('profiles')
+    .select('id,full_name,age,gender,location,bio,avatar_url,is_online,last_seen')
+    .in('id', favoriteIds);
+
+  if (profileError) {
+    $('favoritesList').innerHTML = '';
+    notice('Could not load favourite profiles: ' + profileError.message);
+    return;
+  }
+
+  const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+  const orderedProfiles = favoriteIds
+    .map(id => profileMap.get(id))
+    .filter(Boolean);
+
+  if (!orderedProfiles.length) {
+    $('favoritesList').innerHTML = '<p>Your saved profiles are unavailable.</p>';
+    return;
+  }
+
+  $('favoritesList').innerHTML =
+    orderedProfiles.map(p => memberCard(p)).join('');
+
+  renderOnlineDots();
+}
 async function loadDiscover() {
   showAppView('discoverView');
   $('members').innerHTML = '<p>Loading members…</p>';
