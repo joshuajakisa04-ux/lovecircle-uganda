@@ -1674,24 +1674,41 @@ async function refreshMessages() {
   
   
 
-async function sendMessage(){
-  const message=$('chatInput').value.trim();
-  if(!message||!activeMatch)return;
+async function sendMessage() {
+  const message = $('chatInput').value.trim();
+  if (!message || !activeMatch) return;
 
-  const receiver_id=activeMatch.user1_id===currentUser.id
-    ?activeMatch.user2_id:activeMatch.user1_id;
+  const receiver_id = activeMatch.user1_id === currentUser.id
+    ? activeMatch.user2_id
+    : activeMatch.user1_id;
 
-  const {error}=await supabaseClient.from('messages').insert({
-    match_id:activeMatch.id,
-    sender_id:currentUser.id,
+  const { error } = await supabaseClient.from('messages').insert({
+    match_id: activeMatch.id,
+    sender_id: currentUser.id,
     receiver_id,
     message
   });
 
-  if(error){notice('Could not send message: '+error.message);return;}
+  if (error) {
+    notice('Could not send message: ' + error.message);
+    return;
+  }
 
-  $('chatInput').value='';
+  $('chatInput').value = '';
   await refreshMessages();
+
+  const { error: notificationError } = await supabaseClient
+    .from('notifications')
+    .insert({
+      user_id: receiver_id,
+      actor_id: currentUser.id,
+      type: 'message',
+      message: 'You received a new message! 💬'
+    });
+
+  if (notificationError) {
+    notice('Message sent, but notification could not be created.');
+  }
 }
 
 supabaseClient.auth.getSession().then(({data,error})=>{
