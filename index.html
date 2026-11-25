@@ -1205,35 +1205,62 @@ await loadMyPhotoGallery();
 }
 
 async function likeMember(id) {
-  const {error} = await supabaseClient.from('likes').upsert({
-    user_id:currentUser.id,
-    liked_user_id:id
-  },{onConflict:'user_id,liked_user_id'});
+  const { error } = await supabaseClient.from('likes').upsert({
+    user_id: currentUser.id,
+    liked_user_id: id
+  }, { onConflict: 'user_id,liked_user_id' });
 
   if (error) {
     notice('Could not send like: ' + error.message);
     return;
   }
 
-  const {data:back} = await supabaseClient.from('likes')
-    .select('id').eq('user_id',id)
-    .eq('liked_user_id',currentUser.id).maybeSingle();
+  await supabaseClient.from('notifications').insert({
+    user_id: id,
+    actor_id: currentUser.id,
+    type: 'like',
+    message: 'Someone likes your profile! ❤️'
+  });
+
+  const { data: back } = await supabaseClient.from('likes')
+    .select('id')
+    .eq('user_id', id)
+    .eq('liked_user_id', currentUser.id)
+    .maybeSingle();
 
   if (back) {
-    const [a,b] = [currentUser.id,id].sort();
+    const [a, b] = [currentUser.id, id].sort();
+
     const result = await supabaseClient.from('matches').upsert({
-      user1_id:a,user2_id:b
-    },{onConflict:'user1_id,user2_id'});
+      user1_id: a,
+      user2_id: b
+    }, { onConflict: 'user1_id,user2_id' });
 
     if (result.error) {
       notice('Like sent! Match creation needs database permissions: ' + result.error.message);
     } else {
+      await supabaseClient.from('notifications').insert({
+        user_id: id,
+        actor_id: currentUser.id,
+        type: 'match',
+        message: 'You have a new mutual match! 💕'
+      });
+
+      await supabaseClient.from('notifications').insert({
+        user_id: currentUser.id,
+        actor_id: id,
+        type: 'match',
+        message: 'You have a new mutual match! 💕'
+      });
+
       notice('It is a match! ❤️');
     }
   } else {
     notice('Like sent! If they like you back, you can match.');
   }
-}
+
+  await loadNotificationBadge();
+  }
 
 async function loadLikes() {
   showAppView('likesView');
