@@ -1473,7 +1473,7 @@ await Promise.all(statuses.map(async s => {
   $('statusesList').innerHTML = statuses.map(s => {
     const owner = names[s.user_id] || 'Member';
     const mine = s.user_id === currentUser.id;
-
+const mediaUrl = mediaUrls[s.id] || '';
     let media = '';
 
     if (s.media_type === 'image') {
