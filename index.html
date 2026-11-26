@@ -1460,6 +1460,7 @@ async function loadStatuses(userId = null) {
 
     if (s.media_type === 'image') {
       media = `<img src="${safe(s.media_url)}" style="width:100%;max-width:350px;border-radius:14px">`;
+    <video src="${safe(s.media_url)}" controls playsinline>
     } else if (s.media_type === 'video') {
       media = `<video src="${safe(s.media_url)}" controls playsinline style="width:100%;max-width:350px;border-radius:14px"></video>`;
     } else {
