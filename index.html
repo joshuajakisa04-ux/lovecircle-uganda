@@ -1482,7 +1482,9 @@ const mediaUrl = mediaUrls[s.id] || '';
   : '<p>Media unavailable.</p>';
     <video src="${safe(s.media_url)}" controls playsinline>
     } else if (s.media_type === 'video') {
-      media = `<video src="${safe(s.media_url)}" controls playsinline style="width:100%;max-width:350px;border-radius:14px"></video>`;
+      media = mediaUrl
+  ? `<video src="${safe(mediaUrl)}" controls playsinline style="width:100%;max-width:350px;border-radius:14px"></video>`
+  : '<p>Media unavailable.</p>';
     } else {
       media = `<p>${safe(s.caption || '')}</p>`;
     }
