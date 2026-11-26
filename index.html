@@ -1656,6 +1656,7 @@ async function refreshMessages() {
   
   
 
+
 async function sendMessage() {
   const message = $('chatInput').value.trim();
   if (!message || !activeMatch) return;
@@ -1678,20 +1679,8 @@ async function sendMessage() {
 
   $('chatInput').value = '';
   await refreshMessages();
-
-  const { error: notificationError } = await supabaseClient
-    .from('notifications')
-    .insert({
-      user_id: receiver_id,
-      actor_id: currentUser.id,
-      type: 'message',
-      message: 'You received a new message! 💬'
-    });
-
-  if (notificationError) {
-    notice('Message sent, but notification could not be created.');
-  }
 }
+  
 
 supabaseClient.auth.getSession().then(({data,error})=>{
   if(error){notice(error.message);return;}
