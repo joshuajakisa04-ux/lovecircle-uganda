@@ -1563,7 +1563,20 @@ async function showStatusViewers(statusId) {
 }
 
 async function deleteStatus(statusId) {
+  if (!currentUser) return;
   if (!confirm('Delete this status?')) return;
+
+  const { data: status, error: fetchError } = await supabaseClient
+    .from('statuses')
+    .select('id,media_url,media_type')
+    .eq('id', statusId)
+    .eq('user_id', currentUser.id)
+    .single();
+
+  if (fetchError || !status) {
+    notice('Could not find your status.');
+    return;
+  }
 
   const { error } = await supabaseClient
     .from('statuses')
@@ -1576,9 +1589,29 @@ async function deleteStatus(statusId) {
     return;
   }
 
-  notice('Status deleted.');
-  await loadStatuses();
+  if (status.media_type !== 'text' && status.media_url) {
+    let path = status.media_url;
+    const marker = '/object/public/love-statuses/';
+
+    if (path.includes(marker)) {
+      path = path.split(marker)[1].split('?')[0];
+    }
+
+    const { error: storageError } = await supabaseClient
+      .storage
+      .from('love-statuses')
+      .remove([path]);
+
+    if (storageError) {
+      notice('Status deleted, but media cleanup failed: ' + storageError.message);
+      await loadStatuses();
+      return;
+    }
   }
+
+  notice('Status and media deleted successfully.');
+  await loadStatuses();
+}
 
 async function openChat(otherId) {
   const match = (window.matchRows || []).find(m =>
