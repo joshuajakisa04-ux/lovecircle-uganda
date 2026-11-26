@@ -1386,9 +1386,7 @@ async function createStatus() {
       return;
     }
 
-    mediaUrl = supabaseClient.storage
-      .from('love-statuses')
-      .getPublicUrl(path).data.publicUrl;
+    mediaUrl = path;
   }
 
   const { error } = await supabaseClient.from('statuses').insert({
