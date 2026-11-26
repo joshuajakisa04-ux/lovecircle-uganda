@@ -547,9 +547,20 @@ function showSection(id) {
   clearNotice();
 }
 function showAppView(id) {
-  ['discoverView','memberProfileView','profileView','likesView','matchesView','statusView'].forEach(x => $(x).classList.add('hidden'));
-  $(id).classList.remove('hidden');
-  }
+  [
+    'discoverView',
+    'memberProfileView',
+    'profileView',
+    'likesView',
+    'matchesView',
+    'statusView',
+    'favoritesView',
+    'notificationsView',
+    'whatsappView'
+  ].forEach(x => $(x)?.classList.add('hidden'));
+
+  $(id)?.classList.remove('hidden');
+}
 
 async function registerUser() {
   const full_name = $('regName').value.trim();
