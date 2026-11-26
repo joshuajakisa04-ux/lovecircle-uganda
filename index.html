@@ -1204,6 +1204,7 @@ async function loadMyProfile() {
 await loadMyPhotoGallery();
 }
 
+
 async function likeMember(id) {
   const { error } = await supabaseClient.from('likes').upsert({
     user_id: currentUser.id,
@@ -1214,13 +1215,6 @@ async function likeMember(id) {
     notice('Could not send like: ' + error.message);
     return;
   }
-
-  await supabaseClient.from('notifications').insert({
-    user_id: id,
-    actor_id: currentUser.id,
-    type: 'like',
-    message: 'Someone likes your profile! ❤️'
-  });
 
   const { data: back } = await supabaseClient.from('likes')
     .select('id')
@@ -1239,20 +1233,6 @@ async function likeMember(id) {
     if (result.error) {
       notice('Like sent! Match creation needs database permissions: ' + result.error.message);
     } else {
-      await supabaseClient.from('notifications').insert({
-        user_id: id,
-        actor_id: currentUser.id,
-        type: 'match',
-        message: 'You have a new mutual match! 💕'
-      });
-
-      await supabaseClient.from('notifications').insert({
-        user_id: currentUser.id,
-        actor_id: id,
-        type: 'match',
-        message: 'You have a new mutual match! 💕'
-      });
-
       notice('It is a match! ❤️');
     }
   } else {
@@ -1260,7 +1240,8 @@ async function likeMember(id) {
   }
 
   await loadNotificationBadge();
-  }
+}
+  
 
 async function loadLikes() {
   showAppView('likesView');
