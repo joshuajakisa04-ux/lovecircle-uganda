@@ -1449,7 +1449,27 @@ async function loadStatuses(userId = null) {
 
   const names = {};
   (people || []).forEach(p => names[p.id] = p.full_name || 'Member');
+const mediaUrls = {};
 
+await Promise.all(statuses.map(async s => {
+  if (s.media_type === 'text') return;
+
+  let path = s.media_url || '';
+  const marker = '/object/public/love-statuses/';
+
+  if (path.includes(marker)) {
+    path = path.split(marker)[1].split('?')[0];
+  }
+
+  const { data, error } = await supabaseClient
+    .storage
+    .from('love-statuses')
+    .createSignedUrl(path, 3600);
+
+  if (!error && data?.signedUrl) {
+    mediaUrls[s.id] = data.signedUrl;
+  }
+}));
   $('statusesList').innerHTML = statuses.map(s => {
     const owner = names[s.user_id] || 'Member';
     const mine = s.user_id === currentUser.id;
