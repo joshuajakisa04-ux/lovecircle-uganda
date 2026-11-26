@@ -1477,7 +1477,9 @@ const mediaUrl = mediaUrls[s.id] || '';
     let media = '';
 
     if (s.media_type === 'image') {
-      media = `<img src="${safe(s.media_url)}" style="width:100%;max-width:350px;border-radius:14px">`;
+      media = mediaUrl
+  ? `<img src="${safe(mediaUrl)}" style="width:100%;max-width:350px;border-radius:14px">`
+  : '<p>Media unavailable.</p>';
     <video src="${safe(s.media_url)}" controls playsinline>
     } else if (s.media_type === 'video') {
       media = `<video src="${safe(s.media_url)}" controls playsinline style="width:100%;max-width:350px;border-radius:14px"></video>`;
