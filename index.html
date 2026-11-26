@@ -1226,10 +1226,9 @@ async function likeMember(id) {
     const [a, b] = [currentUser.id, id].sort();
 
     const result = await supabaseClient.from('matches').upsert({
-      user1_id: a,
-      user2_id: b
-    }, { onConflict: 'user1_id,user2_id' });
-
+  user1_id: a,
+  user2_id: b
+}, { onConflict: 'user1_id,user2_id', ignoreDuplicates: true });
     if (result.error) {
       notice('Like sent! Match creation needs database permissions: ' + result.error.message);
     } else {
